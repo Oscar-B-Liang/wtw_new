@@ -17,9 +17,9 @@ import os
 
 
 def load_policy(logdir):
-    body = torch.jit.load(logdir + '/checkpoints/body_latest.jit')
+    body = torch.jit.load(logdir + '/checkpoints/body_latest.jit', map_location="cuda:0")
     # import os
-    adaptation_module = torch.jit.load(logdir + '/checkpoints/adaptation_module_latest.jit')
+    adaptation_module = torch.jit.load(logdir + '/checkpoints/adaptation_module_latest.jit', map_location="cuda:0")
 
     def policy(obs, info={}):
         # i = 0
@@ -62,6 +62,8 @@ def load_env(logdir, headless=False):
 
     Cfg.env.num_recording_envs = 1
     Cfg.env.num_envs = 1
+    Cfg.env.zero_out = True
+
     Cfg.terrain.num_rows = 5
     Cfg.terrain.num_cols = 5
     Cfg.terrain.border_size = 0
@@ -129,7 +131,8 @@ def play_go1(model_dir, test_speed, headless=True):
         env.commands[:, 3] = body_height_cmd
         env.commands[:, 4] = step_frequency_cmd
         env.commands[:, 5:8] = gait
-        env.commands[:, 8] = 0.5
+        # env.commands[:, 8] = 0.5
+        env.commands[:, 8] = 0.0
         env.commands[:, 9] = footswing_height_cmd
         env.commands[:, 10] = pitch_cmd
         env.commands[:, 11] = roll_cmd
@@ -173,6 +176,7 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     # model_dir is the relative path starting from this repo root.
+    parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--model_dir", type=str, required=True)
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--test_speed", type=float, default=1.0)

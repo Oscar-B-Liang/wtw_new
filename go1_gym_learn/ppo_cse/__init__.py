@@ -48,7 +48,8 @@ class RunnerArgs(PrefixProto, cli=False):
 
     # logging
     save_interval = 400  # check for potential saves every this many iterations
-    save_video_interval = 100
+    # save_video_interval = 100
+    save_video_interval = 50000
     log_freq = 10
 
     # load and resume

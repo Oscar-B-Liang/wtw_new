@@ -31,7 +31,7 @@ def train_schedule(gpu_list):
         "search energy weight and sigma",
         BASH_COMMAND_LIST[:],
         logger,
-        gpu_m_th=8000,
+        gpu_m_th=20000,
         gpu_list=gpu_list,
         maxcheck=5
     )
@@ -45,5 +45,5 @@ def train_schedule(gpu_list):
 
 
 if __name__ == "__main__":
-    gpu_list = [0, 1]
+    gpu_list = [0, 1, 2, 3, 4, 5, 6, 7]
     train_schedule(gpu_list)
