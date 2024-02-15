@@ -200,3 +200,9 @@ class CoRLRewards:
         reward = torch.sum(torch.square(err_raibert_heuristic), dim=(1, 2))
 
         return reward
+    
+    def _reward_energy(self):
+        # Reward less energy consumption.
+        # The torque here is the actuation command torque applied to the joints.
+        energy_consume = torch.sum(torch.abs(self.env.dof_vel * self.env.torques), dim=1)
+        return torch.exp(-energy_consume / self.env.cfg.rewards.energy_sigma)

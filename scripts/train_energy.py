@@ -1,4 +1,10 @@
-def train_go1(headless):
+def train_go1(
+    headless: bool,
+    energy: float,
+    energy_sigma: float,
+    train_speed: float,
+    lin_vel_sigma: float
+):
 
     import isaacgym
     assert isaacgym
@@ -120,15 +126,17 @@ def train_go1(headless):
     Cfg.rewards.gait_vel_sigma = 10.
 
     Cfg.rewards.reward_container_name = "CoRLRewards"
-    Cfg.rewards.only_positive_rewards = False
-    Cfg.rewards.only_positive_rewards_ji22_style = True
+    Cfg.rewards.only_positive_rewards = True
+    Cfg.rewards.only_positive_rewards_ji22_style = False
     Cfg.rewards.sigma_rew_neg = 0.02
 
     Cfg.env.zero_out = True
 
     # Task Rewards.
+    Cfg.rewards.tracking_sigma = lin_vel_sigma
     Cfg.reward_scales.tracking_lin_vel = 1.0
     Cfg.reward_scales.tracking_ang_vel = 0.5
+    Cfg.reward_scales.tracking_lin_vel_dep = 0.0
 
     # Augmented Auxiliary Rewards.
     Cfg.reward_scales.tracking_contacts_shaped_force = 0.0
@@ -139,26 +147,30 @@ def train_go1(headless):
     Cfg.reward_scales.feet_clearance_cmd_linear = 0.0
 
     # Fixed Auxiliary Rewards.
-    Cfg.reward_scales.lin_vel_z = -0.02
-    Cfg.reward_scales.ang_vel_xy = -0.001
-    Cfg.reward_scales.feet_slip = -0.04
-    Cfg.reward_scales.collision = -5.0
-    Cfg.reward_scales.dof_pos_limits = -10.0
-    Cfg.reward_scales.torques = -0.0001
-    Cfg.reward_scales.dof_vel = -1e-4
-    Cfg.reward_scales.dof_acc = -2.5e-7
-    Cfg.reward_scales.action_smoothness_1 = -0.1
-    Cfg.reward_scales.action_smoothness_2 = -0.1
+    Cfg.reward_scales.lin_vel_z = 0.0
+    Cfg.reward_scales.ang_vel_xy = -0.0
+    Cfg.reward_scales.feet_slip = -0.0
+    Cfg.reward_scales.collision = -0.0
+    Cfg.reward_scales.dof_pos_limits = -0.0
+    Cfg.reward_scales.torques = -0.0
+    Cfg.reward_scales.dof_vel = -0.0
+    Cfg.reward_scales.dof_acc = -0.0
+    Cfg.reward_scales.action_smoothness_1 = -0.0
+    Cfg.reward_scales.action_smoothness_2 = -0.0
 
     # Rewards used in legged gym, but unparticipated here.
     Cfg.reward_scales.feet_air_time = 0.0
-    Cfg.reward_scales.action_rate = -0.01
+    Cfg.reward_scales.action_rate = -0.0
 
     # Unparticipated Rewards.
     Cfg.reward_scales.dof_pos = -0.0
     Cfg.reward_scales.feet_impact_vel = -0.0
-    Cfg.reward_scales.orientation = 0.0
+    Cfg.reward_scales.orientation = -0.0
     Cfg.reward_scales.feet_contact_forces = 0.0
+
+    # Energy rewards.
+    Cfg.rewards.energy_sigma = energy_sigma
+    Cfg.reward_scales.energy = energy
 
     # Uncorresponded Rewards.
     Cfg.reward_scales.base_height = 0.0
@@ -174,15 +186,15 @@ def train_go1(headless):
     Cfg.reward_scales.tracking_lin_vel_long = 0.0
     Cfg.reward_scales.tracking_contacts = 0.0
     Cfg.reward_scales.tracking_contacts_shaped = 0.0
-    Cfg.reward_scales.energy = 0.0
     Cfg.reward_scales.energy_expenditure = 0.0
     Cfg.reward_scales.survival = 0.0
     Cfg.reward_scales.base_motion = 0.0
 
+
     # Cfg.commands.lin_vel_x = [-1.0, 1.0]
     # Cfg.commands.lin_vel_y = [-0.6, 0.6]
     # Cfg.commands.ang_vel_yaw = [-1.0, 1.0]
-    Cfg.commands.lin_vel_x = [1.0, 1.0]
+    Cfg.commands.lin_vel_x = [train_speed, train_speed]
     Cfg.commands.lin_vel_y = [0.0, 0.0]
     Cfg.commands.ang_vel_yaw = [0.0, 0.0]
 
@@ -201,7 +213,7 @@ def train_go1(headless):
     # Cfg.commands.limit_vel_x = [-5.0, 5.0]
     # Cfg.commands.limit_vel_y = [-0.6, 0.6]
     # Cfg.commands.limit_vel_yaw = [-5.0, 5.0]
-    Cfg.commands.limit_vel_x = [1.0, 1.0]
+    Cfg.commands.limit_vel_x = [train_speed, train_speed]
     Cfg.commands.limit_vel_y = [0.0, 0.0]
     Cfg.commands.limit_vel_yaw = [0.0, 0.0]
 
@@ -262,6 +274,10 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('--headless', action="store_true")
+    parser.add_argument('--energy', type=float, default=1.0)
+    parser.add_argument('--energy_sigma', type=float, default=600.0)
+    parser.add_argument('--train_speed', type=float, default=1.0)
+    parser.add_argument('--lin_vel_sigma', type=float, default=0.25)
     args = parser.parse_args()
 
     stem = Path(__file__).stem
