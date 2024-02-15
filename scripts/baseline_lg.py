@@ -120,10 +120,11 @@ def train_go1(headless):
     Cfg.rewards.gait_vel_sigma = 10.
 
     Cfg.rewards.reward_container_name = "CoRLRewards"
-    Cfg.rewards.only_positive_rewards = False
-    Cfg.rewards.only_positive_rewards_ji22_style = True
+    Cfg.rewards.only_positive_rewards = True
+    Cfg.rewards.only_positive_rewards_ji22_style = False
     Cfg.rewards.sigma_rew_neg = 0.02
 
+    Cfg.env.zero_out = True
 
     # Task Rewards.
     Cfg.reward_scales.tracking_lin_vel = 1.0
@@ -138,25 +139,25 @@ def train_go1(headless):
     Cfg.reward_scales.feet_clearance_cmd_linear = 0.0
 
     # Fixed Auxiliary Rewards.
-    Cfg.reward_scales.lin_vel_z = -0.02
-    Cfg.reward_scales.ang_vel_xy = -0.001
-    Cfg.reward_scales.feet_slip = -0.04
-    Cfg.reward_scales.collision = -5.0
+    Cfg.reward_scales.lin_vel_z = -2.0
+    Cfg.reward_scales.ang_vel_xy = -0.05
+    Cfg.reward_scales.feet_slip = -0.0
+    Cfg.reward_scales.collision = -1.0
     Cfg.reward_scales.dof_pos_limits = -10.0
     Cfg.reward_scales.torques = -0.0001
-    Cfg.reward_scales.dof_vel = -1e-4
+    Cfg.reward_scales.dof_vel = -0.0
     Cfg.reward_scales.dof_acc = -2.5e-7
-    Cfg.reward_scales.action_smoothness_1 = -0.1
-    Cfg.reward_scales.action_smoothness_2 = -0.1
+    Cfg.reward_scales.action_smoothness_1 = -0.0
+    Cfg.reward_scales.action_smoothness_2 = -0.0
 
     # Rewards used in legged gym, but unparticipated here.
-    Cfg.reward_scales.feet_air_time = 0.0
+    Cfg.reward_scales.feet_air_time = 2.0
     Cfg.reward_scales.action_rate = -0.01
 
     # Unparticipated Rewards.
     Cfg.reward_scales.dof_pos = -0.0
     Cfg.reward_scales.feet_impact_vel = -0.0
-    Cfg.reward_scales.orientation = 0.0
+    Cfg.reward_scales.orientation = -5.0
     Cfg.reward_scales.feet_contact_forces = 0.0
 
     # Uncorresponded Rewards.

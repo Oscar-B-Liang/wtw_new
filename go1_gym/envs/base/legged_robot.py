@@ -376,6 +376,11 @@ class LeggedRobot(BaseTask):
         # add noise if needed
         if self.add_noise:
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
+        
+        # Zero out unnecessary observation buffers.
+        if self.cfg.env.zero_out:
+            self.obs_buf[:, 6: 18] = 0
+            self.obs_buf[:, 66: 70] = 0
 
         # build privileged obs
 

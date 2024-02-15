@@ -124,6 +124,7 @@ def train_go1(headless):
     Cfg.rewards.only_positive_rewards_ji22_style = True
     Cfg.rewards.sigma_rew_neg = 0.02
 
+    Cfg.env.zero_out = True
 
     # Task Rewards.
     Cfg.reward_scales.tracking_lin_vel = 1.0

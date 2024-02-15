@@ -99,13 +99,20 @@ def play_go1(model_dir, test_speed, headless=True):
     }
 
     x_vel_cmd, y_vel_cmd, yaw_vel_cmd = test_speed, 0.0, 0.0
+    # body_height_cmd = 0.0
+    # step_frequency_cmd = 3.0
+    # gait = torch.tensor(gaits["trotting"])
+    # footswing_height_cmd = 0.08
+    # pitch_cmd = 0.0
+    # roll_cmd = 0.0
+    # stance_width_cmd = 0.25
     body_height_cmd = 0.0
-    step_frequency_cmd = 3.0
-    gait = torch.tensor(gaits["trotting"])
-    footswing_height_cmd = 0.08
+    step_frequency_cmd = 0.0
+    gait = torch.tensor(gaits["pronking"])
+    footswing_height_cmd = 0.0
     pitch_cmd = 0.0
     roll_cmd = 0.0
-    stance_width_cmd = 0.25
+    stance_width_cmd = 0.0
 
     measured_x_vels = np.zeros(num_eval_steps)
     joint_positions = np.zeros((num_eval_steps, 12))
