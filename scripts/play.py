@@ -14,12 +14,21 @@ from go1_gym.utils.logger import Logger
 
 from tqdm import tqdm
 import os
+import io
+
+
+class Local_Unpickler(pkl.Unpickler):
+    def find_class(self, module, name):
+        if module == 'torch.storage' and name == '_load_from_bytes':
+            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+        else:
+            return super().find_class(module, name)
 
 
 def load_policy(logdir):
-    body = torch.jit.load(logdir + '/checkpoints/body_latest.jit', map_location="cuda:0")
+    body = torch.jit.load(logdir + '/checkpoints/body_latest.jit', map_location="cpu")
     # import os
-    adaptation_module = torch.jit.load(logdir + '/checkpoints/adaptation_module_latest.jit', map_location="cuda:0")
+    adaptation_module = torch.jit.load(logdir + '/checkpoints/adaptation_module_latest.jit', map_location="cpu")
 
     def policy(obs, info={}):
         # i = 0
@@ -35,7 +44,8 @@ def load_env(logdir, headless=False):
     print("Loading from directory ", logdir)
 
     with open(logdir + "/parameters.pkl", 'rb') as file:
-        pkl_cfg = pkl.load(file)
+        # pkl_cfg = pkl.load(file)
+        pkl_cfg = Local_Unpickler(file).load()
         print(pkl_cfg.keys())
         cfg = pkl_cfg["Cfg"]
         print(cfg.keys())
