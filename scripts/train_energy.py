@@ -1,4 +1,5 @@
 def train_go1(
+    device: int,
     headless: bool,
     energy: float,
     energy_sigma: float,
@@ -253,14 +254,14 @@ def train_go1(
     Cfg.commands.binary_phases = True
     Cfg.commands.gaitwise_curricula = True
 
-    env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=headless, cfg=Cfg)
+    env = VelocityTrackingEasyEnv(sim_device=f'cuda:{device}', headless=headless, cfg=Cfg)
 
     # log the experiment parameters
     logger.log_params(AC_Args=vars(AC_Args), PPO_Args=vars(PPO_Args), RunnerArgs=vars(RunnerArgs),
                       Cfg=vars(Cfg))
 
     env = HistoryWrapper(env)
-    gpu_id = 0
+    gpu_id = device
     runner = Runner(env, device=f"cuda:{gpu_id}")
     runner.learn(num_learning_iterations=2000, init_at_random_ep_len=True, eval_freq=100)
 
@@ -274,6 +275,7 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('--headless', action="store_true")
+    parser.add_argument('--device', type=int, default=0)
     parser.add_argument('--energy', type=float, default=1.0)
     parser.add_argument('--energy_sigma', type=float, default=600.0)
     parser.add_argument('--train_speed', type=float, default=1.0)
@@ -314,4 +316,11 @@ if __name__ == '__main__':
                 """, filename=".charts.yml", dedent=True)
 
     # to see the environment rendering, set headless=False
-    train_go1(headless=args.headless)
+    train_go1(
+        device=args.device,
+        headless=args.headless,
+        energy=args.energy,
+        energy_sigma=args.energy_sigma,
+        train_speed=args.train_speed,
+        lin_vel_sigma=args.lin_vel_sigma
+    )
