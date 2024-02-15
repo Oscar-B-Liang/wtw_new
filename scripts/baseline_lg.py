@@ -1,4 +1,4 @@
-def train_go1(headless):
+def train_go1(device, headless):
 
     import isaacgym
     assert isaacgym
@@ -242,14 +242,14 @@ def train_go1(headless):
     Cfg.commands.binary_phases = True
     Cfg.commands.gaitwise_curricula = True
 
-    env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=headless, cfg=Cfg)
+    env = VelocityTrackingEasyEnv(sim_device=f'cuda:{device}', headless=headless, cfg=Cfg)
 
     # log the experiment parameters
     logger.log_params(AC_Args=vars(AC_Args), PPO_Args=vars(PPO_Args), RunnerArgs=vars(RunnerArgs),
                       Cfg=vars(Cfg))
 
     env = HistoryWrapper(env)
-    gpu_id = 0
+    gpu_id = device
     runner = Runner(env, device=f"cuda:{gpu_id}")
     runner.learn(num_learning_iterations=2000, init_at_random_ep_len=True, eval_freq=100)
 
@@ -263,6 +263,7 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('--headless', action="store_true")
+    parser.add_argument('--device', default=0, type=int)
     args = parser.parse_args()
 
     stem = Path(__file__).stem
@@ -299,4 +300,4 @@ if __name__ == '__main__':
                 """, filename=".charts.yml", dedent=True)
 
     # to see the environment rendering, set headless=False
-    train_go1(headless=args.headless)
+    train_go1(device=args.device, headless=args.headless)
