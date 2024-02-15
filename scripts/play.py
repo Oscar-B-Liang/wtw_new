@@ -1,26 +1,28 @@
+from argparse import ArgumentParser
 import isaacgym
 
 assert isaacgym
 import torch
 import numpy as np
 
-import glob
 import pickle as pkl
 
-from go1_gym.envs import *
+from go1_gym import MINI_GYM_ROOT_DIR
 from go1_gym.envs.base.legged_robot_config import Cfg
-from go1_gym.envs.go1.go1_config import config_go1
 from go1_gym.envs.go1.velocity_tracking import VelocityTrackingEasyEnv
+from go1_gym.utils.logger import Logger
 
 from tqdm import tqdm
+import os
+
 
 def load_policy(logdir):
     body = torch.jit.load(logdir + '/checkpoints/body_latest.jit')
-    import os
+    # import os
     adaptation_module = torch.jit.load(logdir + '/checkpoints/adaptation_module_latest.jit')
 
     def policy(obs, info={}):
-        i = 0
+        # i = 0
         latent = adaptation_module.forward(obs["obs_history"].to('cpu'))
         action = body.forward(torch.cat((obs["obs_history"].to('cpu'), latent), dim=-1))
         info['latent'] = latent
@@ -29,9 +31,8 @@ def load_policy(logdir):
     return policy
 
 
-def load_env(label, headless=False):
-    dirs = glob.glob(f"../runs/{label}/*")
-    logdir = sorted(dirs)[0]
+def load_env(logdir, headless=False):
+    print("Loading from directory ", logdir)
 
     with open(logdir + "/parameters.pkl", 'rb') as file:
         pkl_cfg = pkl.load(file)
@@ -74,37 +75,30 @@ def load_env(label, headless=False):
 
     from go1_gym.envs.wrappers.history_wrapper import HistoryWrapper
 
-    env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=False, cfg=Cfg)
+    env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=headless, cfg=Cfg)
     env = HistoryWrapper(env)
 
     # load policy
-    from ml_logger import logger
-    from go1_gym_learn.ppo_cse.actor_critic import ActorCritic
-
     policy = load_policy(logdir)
 
     return env, policy
 
 
-def play_go1(headless=True):
-    from ml_logger import logger
+def play_go1(model_dir, test_speed, headless=True):
 
-    from pathlib import Path
-    from go1_gym import MINI_GYM_ROOT_DIR
-    import glob
-    import os
-
-    label = "gait-conditioned-agility/pretrain-v0/train"
-
-    env, policy = load_env(label, headless=headless)
+    model_dir = f"{MINI_GYM_ROOT_DIR}/{model_dir}"
+    env, policy = load_env(model_dir, headless=headless)
+    os.makedirs(os.path.join(model_dir, "analysis"), exist_ok=True)
 
     num_eval_steps = 250
-    gaits = {"pronking": [0, 0, 0],
-             "trotting": [0.5, 0, 0],
-             "bounding": [0, 0.5, 0],
-             "pacing": [0, 0, 0.5]}
+    gaits = {
+        "pronking": [0, 0, 0],
+        "trotting": [0.5, 0, 0],
+        "bounding": [0, 0.5, 0],
+        "pacing": [0, 0, 0.5]
+    }
 
-    x_vel_cmd, y_vel_cmd, yaw_vel_cmd = 1.5, 0.0, 0.0
+    x_vel_cmd, y_vel_cmd, yaw_vel_cmd = test_speed, 0.0, 0.0
     body_height_cmd = 0.0
     step_frequency_cmd = 3.0
     gait = torch.tensor(gaits["trotting"])
@@ -114,9 +108,9 @@ def play_go1(headless=True):
     stance_width_cmd = 0.25
 
     measured_x_vels = np.zeros(num_eval_steps)
-    target_x_vels = np.ones(num_eval_steps) * x_vel_cmd
     joint_positions = np.zeros((num_eval_steps, 12))
 
+    logger = Logger(env.env.dt, env.env.dof_names, env.feet_names, test_speed, model_dir, 200)
     obs = env.reset()
 
     for i in tqdm(range(num_eval_steps)):
@@ -135,28 +129,46 @@ def play_go1(headless=True):
         env.commands[:, 12] = stance_width_cmd
         obs, rew, done, info = env.step(actions)
 
+        log_dict = {
+            'command_x': env.env.commands[:, 0].cpu().numpy(),
+            'command_y': env.env.commands[:, 1].cpu().numpy(),
+            'command_yaw': env.env.commands[:, 2].cpu().numpy(),
+        }
+
+        log_dict['base_pos_x'] = env.env.base_pos[:, 0].cpu().numpy()
+        log_dict['base_pos_y'] = env.env.base_pos[:, 1].cpu().numpy()
+        log_dict['base_pos_z'] = env.env.base_pos[:, 2].cpu().numpy()
+        log_dict['base_vel_x'] = env.env.base_lin_vel[:, 0].cpu().numpy()
+        log_dict['base_vel_y'] = env.env.base_lin_vel[:, 1].cpu().numpy()
+        log_dict['base_vel_z'] = env.env.base_lin_vel[:, 2].cpu().numpy()
+        log_dict['base_vel_roll'] = env.env.base_ang_vel[:, 0].cpu().numpy()
+        log_dict['base_vel_pitch'] = env.env.base_ang_vel[:, 1].cpu().numpy()
+        log_dict['base_vel_yaw'] = env.env.base_ang_vel[:, 2].cpu().numpy()
+        log_dict['contact_forces_x'] = env.env.contact_forces[:, env.env.feet_indices, 0].cpu().numpy()
+        log_dict['contact_forces_y'] = env.env.contact_forces[:, env.env.feet_indices, 1].cpu().numpy()
+        log_dict['contact_forces_z'] = env.env.contact_forces[:, env.env.feet_indices, 2].cpu().numpy()
+        log_dict['reward'] = env.env.rew_buf[:].detach().clone().cpu().numpy()
+        log_dict['energy_consume'] = env.env.energy_consume[:].cpu().numpy()
+        log_dict['dof_pos'] = env.env.dof_pos.cpu().numpy()
+        log_dict['dof_vel'] = env.env.dof_vel.cpu().numpy()
+        log_dict['dof_acc'] = env.env.dof_acc.cpu().numpy()
+        log_dict['dof_torque'] = env.env.torques.detach().clone().cpu().numpy()
+        log_dict['action_scaled'] = env.env.actions.detach().clone().cpu().numpy() # * env_cfg.control.action_scale
+        logger.log_states(log_dict)
+
         measured_x_vels[i] = env.base_lin_vel[0, 0]
         joint_positions[i] = env.dof_pos[0, :].cpu()
-
-    # plot target and measured forward velocity
-    from matplotlib import pyplot as plt
-    fig, axs = plt.subplots(2, 1, figsize=(12, 5))
-    axs[0].plot(np.linspace(0, num_eval_steps * env.dt, num_eval_steps), measured_x_vels, color='black', linestyle="-", label="Measured")
-    axs[0].plot(np.linspace(0, num_eval_steps * env.dt, num_eval_steps), target_x_vels, color='black', linestyle="--", label="Desired")
-    axs[0].legend()
-    axs[0].set_title("Forward Linear Velocity")
-    axs[0].set_xlabel("Time (s)")
-    axs[0].set_ylabel("Velocity (m/s)")
-
-    axs[1].plot(np.linspace(0, num_eval_steps * env.dt, num_eval_steps), joint_positions, linestyle="-", label="Measured")
-    axs[1].set_title("Joint Positions")
-    axs[1].set_xlabel("Time (s)")
-    axs[1].set_ylabel("Joint Position (rad)")
-
-    plt.tight_layout()
-    plt.show()
+    
+    logger.plot_save_states("", [0])
 
 
 if __name__ == '__main__':
-    # to see the environment rendering, set headless=False
-    play_go1(headless=False)
+
+    parser = ArgumentParser()
+    # model_dir is the relative path starting from this repo root.
+    parser.add_argument("--model_dir", type=str, required=True)
+    parser.add_argument("--headless", action="store_true")
+    parser.add_argument("--test_speed", type=float, default=1.0)
+    args = parser.parse_args()
+
+    play_go1(model_dir=args.model_dir, test_speed=args.test_speed, headless=args.headless)
