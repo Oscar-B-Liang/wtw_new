@@ -130,7 +130,7 @@ class ChildThread(threading.Thread):
         self.logger = logger
 
     def run(self):
-        bash_command = f"conda run -n isaacgym {self.bash_command} --device {self.cuda_device}"
+        bash_command = f"{self.bash_command} --device {self.cuda_device}"
 
         self.logger.info(f'Executing {self.bash_command} on GPU: {self.cuda_device}')
         

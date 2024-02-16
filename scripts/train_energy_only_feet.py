@@ -132,6 +132,7 @@ def train_go1(
     Cfg.rewards.sigma_rew_neg = 0.02
 
     Cfg.env.zero_out = True
+    Cfg.asset.terminate_after_contacts_on = ['base', 'thigh', 'calf', 'hip']
 
     # Task Rewards.
     Cfg.rewards.tracking_sigma = lin_vel_sigma
@@ -284,7 +285,7 @@ if __name__ == '__main__':
 
     stem = Path(__file__).stem
     logger.configure(
-        logger.utcnow(f'{stem}/energy-{args.energy:.3f}-sigma-{args.energy_sigma:.3f}'),
+        logger.utcnow(f'{stem}/energy-{args.energy:.3f}-sigma-{args.energy_sigma:.3f}-only-feet'),
         root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
     )
     logger.log_text("""

@@ -24,7 +24,7 @@ def train_schedule(gpu_list):
     # First layer for loop: alpha value.
     for (alpha, sigma) in combinations:
         BASH_COMMAND_LIST.append(
-            f"python train_energy.py --headless --energy {alpha:.3f} --energy_sigma {sigma:.3f}"
+            f"python train_energy_only_feet.py --headless --energy {alpha:.3f} --energy_sigma {sigma:.3f}"
         )
 
     dispatch_thread = DispatchThread(
