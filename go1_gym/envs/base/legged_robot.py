@@ -135,8 +135,6 @@ class LeggedRobot(BaseTask):
         if self.viewer and self.enable_viewer_sync and self.debug_viz:
             self._draw_debug_vis()
 
-        self._render_headless()
-
     def check_termination(self):
         """ Check if environments need to be reset
         """
@@ -1007,20 +1005,6 @@ class LeggedRobot(BaseTask):
                                                      gymtorch.unwrap_tensor(self.root_states),
                                                      gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
 
-        if cfg.env.record_video and 0 in env_ids:
-            if self.complete_video_frames is None:
-                self.complete_video_frames = []
-            else:
-                self.complete_video_frames = self.video_frames[:]
-            self.video_frames = []
-
-        if cfg.env.record_video and self.eval_cfg is not None and self.num_train_envs in env_ids:
-            if self.complete_video_frames_eval is None:
-                self.complete_video_frames_eval = []
-            else:
-                self.complete_video_frames_eval = self.video_frames_eval[:]
-            self.video_frames_eval = []
-
     def _push_robots(self, env_ids, cfg):
         """ Random pushes the robots. Emulates an impulse by setting a randomized base velocity.
         """
@@ -1596,25 +1580,6 @@ class LeggedRobot(BaseTask):
             self.termination_contact_indices[i] = self.gym.find_actor_rigid_body_handle(self.envs[0],
                                                                                         self.actor_handles[0],
                                                                                         termination_contact_names[i])
-        # if recording video, set up camera
-        if self.cfg.env.record_video:
-            self.camera_props = gymapi.CameraProperties()
-            self.camera_props.width = 360
-            self.camera_props.height = 240
-            self.rendering_camera = self.gym.create_camera_sensor(self.envs[0], self.camera_props)
-            self.gym.set_camera_location(self.rendering_camera, self.envs[0], gymapi.Vec3(1.5, 1, 3.0),
-                                         gymapi.Vec3(0, 0, 0))
-            if self.eval_cfg is not None:
-                self.rendering_camera_eval = self.gym.create_camera_sensor(self.envs[self.num_train_envs],
-                                                                           self.camera_props)
-                self.gym.set_camera_location(self.rendering_camera_eval, self.envs[self.num_train_envs],
-                                             gymapi.Vec3(1.5, 1, 3.0),
-                                             gymapi.Vec3(0, 0, 0))
-        self.video_writer = None
-        self.video_frames = []
-        self.video_frames_eval = []
-        self.complete_video_frames = []
-        self.complete_video_frames_eval = []
 
     def render(self, mode="rgb_array"):
         assert mode == "rgb_array"
@@ -1626,59 +1591,6 @@ class LeggedRobot(BaseTask):
         img = self.gym.get_camera_image(self.sim, self.envs[0], self.rendering_camera, gymapi.IMAGE_COLOR)
         w, h = img.shape
         return img.reshape([w, h // 4, 4])
-
-    def _render_headless(self):
-        if self.record_now and self.complete_video_frames is not None and len(self.complete_video_frames) == 0:
-            bx, by, bz = self.root_states[0, 0], self.root_states[0, 1], self.root_states[0, 2]
-            self.gym.set_camera_location(self.rendering_camera, self.envs[0], gymapi.Vec3(bx, by - 1.0, bz + 1.0),
-                                         gymapi.Vec3(bx, by, bz))
-            self.video_frame = self.gym.get_camera_image(self.sim, self.envs[0], self.rendering_camera,
-                                                         gymapi.IMAGE_COLOR)
-            self.video_frame = self.video_frame.reshape((self.camera_props.height, self.camera_props.width, 4))
-            self.video_frames.append(self.video_frame)
-
-        if self.record_eval_now and self.complete_video_frames_eval is not None and len(
-                self.complete_video_frames_eval) == 0:
-            if self.eval_cfg is not None:
-                bx, by, bz = self.root_states[self.num_train_envs, 0], self.root_states[self.num_train_envs, 1], \
-                             self.root_states[self.num_train_envs, 2]
-                self.gym.set_camera_location(self.rendering_camera_eval, self.envs[self.num_train_envs],
-                                             gymapi.Vec3(bx, by - 1.0, bz + 1.0),
-                                             gymapi.Vec3(bx, by, bz))
-                self.video_frame_eval = self.gym.get_camera_image(self.sim, self.envs[self.num_train_envs],
-                                                                  self.rendering_camera_eval,
-                                                                  gymapi.IMAGE_COLOR)
-                self.video_frame_eval = self.video_frame_eval.reshape(
-                    (self.camera_props.height, self.camera_props.width, 4))
-                self.video_frames_eval.append(self.video_frame_eval)
-
-    def start_recording(self):
-        self.complete_video_frames = None
-        self.record_now = True
-
-    def start_recording_eval(self):
-        self.complete_video_frames_eval = None
-        self.record_eval_now = True
-
-    def pause_recording(self):
-        self.complete_video_frames = []
-        self.video_frames = []
-        self.record_now = False
-
-    def pause_recording_eval(self):
-        self.complete_video_frames_eval = []
-        self.video_frames_eval = []
-        self.record_eval_now = False
-
-    def get_complete_frames(self):
-        if self.complete_video_frames is None:
-            return []
-        return self.complete_video_frames
-
-    def get_complete_frames_eval(self):
-        if self.complete_video_frames_eval is None:
-            return []
-        return self.complete_video_frames_eval
 
     def _get_env_origins(self, env_ids, cfg):
         """ Sets environment origins. On rough terrain the origins are defined by the terrain platforms.

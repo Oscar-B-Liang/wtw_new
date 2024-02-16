@@ -52,7 +52,6 @@ class RunnerArgs(PrefixProto, cli=False):
 
     # logging
     save_interval = 400  # check for potential saves every this many iterations
-    save_video_interval = 100
     log_freq = 10
 
     # load and resume
@@ -210,9 +209,6 @@ class Runner:
                 mean_surrogate_loss=mean_surrogate_loss
             )
 
-            if RunnerArgs.save_video_interval:
-                self.log_video(it)
-
             self.tot_timesteps += self.num_steps_per_env * self.env.num_envs
             if logger.every(RunnerArgs.log_freq, "iteration", start_on=1):
                 # if it % Config.log_freq == 0:
@@ -263,27 +259,6 @@ class Runner:
 
             logger.upload_file(file_path=adaptation_module_path, target_path=f"checkpoints/", once=False)
             logger.upload_file(file_path=body_path, target_path=f"checkpoints/", once=False)
-
-    def log_video(self, it):
-        if it - self.last_recording_it >= RunnerArgs.save_video_interval:
-            self.env.start_recording()
-            if self.env.num_eval_envs > 0:
-                self.env.start_recording_eval()
-            print("START RECORDING")
-            self.last_recording_it = it
-
-        frames = self.env.get_complete_frames()
-        if len(frames) > 0:
-            self.env.pause_recording()
-            print("LOGGING VIDEO")
-            logger.save_video(frames, f"videos/{it:05d}.mp4", fps=1 / self.env.dt)
-
-        if self.env.num_eval_envs > 0:
-            frames = self.env.get_complete_frames_eval()
-            if len(frames) > 0:
-                self.env.pause_recording_eval()
-                print("LOGGING EVAL VIDEO")
-                logger.save_video(frames, f"videos/{it:05d}_eval.mp4", fps=1 / self.env.dt)
 
     def get_inference_policy(self, device=None):
         self.alg.actor_critic.eval()

@@ -309,8 +309,6 @@ if __name__ == '__main__':
                   xKey: iterations
                 - yKey: train/episode/max_terrain_height/mean
                   xKey: iterations
-                - type: video
-                  glob: "videos/*.mp4"
                 - yKey: adaptation_loss/mean
                   xKey: iterations
                 """, filename=".charts.yml", dedent=True)
