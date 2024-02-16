@@ -179,12 +179,9 @@ def train_go1(device, headless):
     Cfg.reward_scales.survival = 0.0
     Cfg.reward_scales.base_motion = 0.0
 
-    # Cfg.commands.lin_vel_x = [-1.0, 1.0]
-    # Cfg.commands.lin_vel_y = [-0.6, 0.6]
-    # Cfg.commands.ang_vel_yaw = [-1.0, 1.0]
-    Cfg.commands.lin_vel_x = [1.0, 1.0]
-    Cfg.commands.lin_vel_y = [0.0, 0.0]
-    Cfg.commands.ang_vel_yaw = [0.0, 0.0]
+    Cfg.commands.lin_vel_x = [-1.0, 1.0]
+    Cfg.commands.lin_vel_y = [-0.6, 0.6]
+    Cfg.commands.ang_vel_yaw = [-1.0, 1.0]
 
     Cfg.commands.body_height_cmd = [-0.25, 0.15]
     Cfg.commands.gait_frequency_cmd_range = [2.0, 4.0]
@@ -198,12 +195,9 @@ def train_go1(device, headless):
     Cfg.commands.stance_width_range = [0.10, 0.45]
     Cfg.commands.stance_length_range = [0.35, 0.45]
 
-    # Cfg.commands.limit_vel_x = [-5.0, 5.0]
-    # Cfg.commands.limit_vel_y = [-0.6, 0.6]
-    # Cfg.commands.limit_vel_yaw = [-5.0, 5.0]
-    Cfg.commands.limit_vel_x = [1.0, 1.0]
-    Cfg.commands.limit_vel_y = [0.0, 0.0]
-    Cfg.commands.limit_vel_yaw = [0.0, 0.0]
+    Cfg.commands.limit_vel_x = [-5.0, 5.0]
+    Cfg.commands.limit_vel_y = [-0.6, 0.6]
+    Cfg.commands.limit_vel_yaw = [-5.0, 5.0]
 
     Cfg.commands.limit_body_height = [-0.25, 0.15]
     Cfg.commands.limit_gait_frequency = [2.0, 4.0]
