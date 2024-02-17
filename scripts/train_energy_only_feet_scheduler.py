@@ -16,7 +16,7 @@ def train_schedule(gpu_list):
     # Logging directory is checkpoints/lb_fixed_vel_terrain_sign_change_energy
 
     logger = get_logger('checkpoints', 'scheduler.log')
-    alphas = np.arange(0.3, 0.8, 0.1).tolist()
+    alphas = np.arange(0.8, 1.6, 0.1).tolist()
     sigmas = np.arange(300, 900, 100).tolist()
     combinations = itertools.product(alphas, sigmas)
     BASH_COMMAND_LIST = []
@@ -45,5 +45,5 @@ def train_schedule(gpu_list):
 
 
 if __name__ == "__main__":
-    gpu_list = [1, 2]
+    gpu_list = [2, 3, 4]
     train_schedule(gpu_list)
