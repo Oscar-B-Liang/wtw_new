@@ -173,7 +173,7 @@ def play_go1(model_dir, test_speed, headless=True):
         log_dict['dof_vel'] = env.env.dof_vel.cpu().numpy()
         log_dict['dof_acc'] = env.env.dof_acc.cpu().numpy()
         log_dict['dof_torque'] = env.env.torques.detach().clone().cpu().numpy()
-        log_dict['action_scaled'] = env.env.actions.detach().clone().cpu().numpy() # * env_cfg.control.action_scale
+        log_dict['action_scaled'] = env.env.actions.detach().clone().cpu().numpy() * env.env.cfg.control.action_scale
         logger.log_states(log_dict)
 
         measured_x_vels[i] = env.base_lin_vel[0, 0]
