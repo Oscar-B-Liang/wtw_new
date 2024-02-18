@@ -1,4 +1,11 @@
-def train_go1(device, headless):
+def train_go1(
+    device: int,
+    headless: bool,
+    energy: float,
+    energy_sigma: float,
+    train_speed: float,
+    lin_vel_sigma: float
+):
 
     import isaacgym
     assert isaacgym
@@ -125,10 +132,13 @@ def train_go1(device, headless):
     Cfg.rewards.sigma_rew_neg = 0.02
 
     Cfg.env.zero_out = True
+    Cfg.asset.terminate_after_contacts_on = ['base', 'thigh', 'calf', 'hip']
 
     # Task Rewards.
+    Cfg.rewards.tracking_sigma = lin_vel_sigma
     Cfg.reward_scales.tracking_lin_vel = 1.0
     Cfg.reward_scales.tracking_ang_vel = 0.5
+    Cfg.reward_scales.tracking_lin_vel_dep = 0.0
 
     # Augmented Auxiliary Rewards.
     Cfg.reward_scales.tracking_contacts_shaped_force = 0.0
@@ -160,6 +170,10 @@ def train_go1(device, headless):
     Cfg.reward_scales.orientation = -0.0
     Cfg.reward_scales.feet_contact_forces = 0.0
 
+    # Energy rewards.
+    Cfg.rewards.energy_sigma = energy_sigma
+    Cfg.reward_scales.energy = energy
+
     # Uncorresponded Rewards.
     Cfg.reward_scales.base_height = 0.0
     Cfg.reward_scales.estimation_bonus = 0.0
@@ -174,13 +188,15 @@ def train_go1(device, headless):
     Cfg.reward_scales.tracking_lin_vel_long = 0.0
     Cfg.reward_scales.tracking_contacts = 0.0
     Cfg.reward_scales.tracking_contacts_shaped = 0.0
-    Cfg.reward_scales.energy = 0.0
     Cfg.reward_scales.energy_expenditure = 0.0
     Cfg.reward_scales.survival = 0.0
     Cfg.reward_scales.base_motion = 0.0
 
 
-    Cfg.commands.lin_vel_x = [1.0, 1.0]
+    # Cfg.commands.lin_vel_x = [-1.0, 1.0]
+    # Cfg.commands.lin_vel_y = [-0.6, 0.6]
+    # Cfg.commands.ang_vel_yaw = [-1.0, 1.0]
+    Cfg.commands.lin_vel_x = [train_speed, train_speed]
     Cfg.commands.lin_vel_y = [0.0, 0.0]
     Cfg.commands.ang_vel_yaw = [0.0, 0.0]
 
@@ -196,7 +212,10 @@ def train_go1(device, headless):
     Cfg.commands.stance_width_range = [0.10, 0.45]
     Cfg.commands.stance_length_range = [0.35, 0.45]
 
-    Cfg.commands.limit_vel_x = [1.0, 1.0]
+    # Cfg.commands.limit_vel_x = [-5.0, 5.0]
+    # Cfg.commands.limit_vel_y = [-0.6, 0.6]
+    # Cfg.commands.limit_vel_yaw = [-5.0, 5.0]
+    Cfg.commands.limit_vel_x = [train_speed, train_speed]
     Cfg.commands.limit_vel_y = [0.0, 0.0]
     Cfg.commands.limit_vel_yaw = [0.0, 0.0]
 
@@ -257,12 +276,16 @@ if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('--headless', action="store_true")
-    parser.add_argument('--device', default=0, type=int)
+    parser.add_argument('--device', type=int, default=0)
+    parser.add_argument('--energy', type=float, default=1.0)
+    parser.add_argument('--energy_sigma', type=float, default=500.0)
+    parser.add_argument('--train_speed', type=float, default=1.0)
+    parser.add_argument('--lin_vel_sigma', type=float, default=0.25)
     args = parser.parse_args()
 
     stem = Path(__file__).stem
     logger.configure(
-        logger.utcnow(f'{stem}/%Y-%m-%d-%H%M%S.%f'),
+        logger.utcnow(f'{stem}/energy-{args.energy:.3f}-sigma-{args.energy_sigma:.3f}'),
         root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
     )
     logger.log_text("""
@@ -294,4 +317,11 @@ if __name__ == '__main__':
                 """, filename=".charts.yml", dedent=True)
 
     # to see the environment rendering, set headless=False
-    train_go1(device=args.device, headless=args.headless)
+    train_go1(
+        device=args.device,
+        headless=args.headless,
+        energy=args.energy,
+        energy_sigma=args.energy_sigma,
+        train_speed=args.train_speed,
+        lin_vel_sigma=args.lin_vel_sigma
+    )
