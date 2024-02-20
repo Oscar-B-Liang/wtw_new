@@ -13,7 +13,7 @@ import numpy as np
 # Base class for RL tasks
 class BaseTask(gym.Env):
 
-    def __init__(self, cfg, sim_params, physics_engine, sim_device, headless, eval_cfg=None):
+    def __init__(self, cfg, sim_params, physics_engine, sim_device, headless, eval_cfg=None, enable_camera_sensor: bool = False):
         self.gym = gymapi.acquire_gym()
 
         if isinstance(physics_engine, str) and physics_engine == "SIM_PHYSX":
@@ -24,6 +24,8 @@ class BaseTask(gym.Env):
         self.sim_device = sim_device
         sim_device_type, self.sim_device_id = gymutil.parse_device_str(self.sim_device)
         self.headless = headless
+        self.enable_camera_sensor = enable_camera_sensor
+        self.recorder_on = False
 
         # env device is GPU only if sim is on GPU and use_gpu_pipeline=True, otherwise returned tensors are copied to CPU by physX.
         if sim_device_type == 'cuda' and sim_params.use_gpu_pipeline:
@@ -39,6 +41,7 @@ class BaseTask(gym.Env):
         self.num_obs = cfg.env.num_observations
         self.num_privileged_obs = cfg.env.num_privileged_obs
         self.num_actions = cfg.env.num_actions
+        self.cam_env_ids = cfg.viewer.cam_env_ids
 
         if eval_cfg is not None:
             self.num_eval_envs = eval_cfg.env.num_envs
@@ -126,10 +129,14 @@ class BaseTask(gym.Env):
             if self.enable_viewer_sync:
                 self.gym.step_graphics(self.sim)
                 self.gym.draw_viewer(self.viewer, self.sim, True)
+                if self.enable_camera_sensor:
+                    self.gym.render_all_camera_sensors(self.sim)
                 if sync_frame_time:
                     self.gym.sync_frame_time(self.sim)
             else:
                 self.gym.poll_viewer_events(self.viewer)
+                if self.enable_camera_sensor:
+                    self.gym.render_all_camera_sensors(self.sim)
 
     def close(self):
         if self.headless == False:

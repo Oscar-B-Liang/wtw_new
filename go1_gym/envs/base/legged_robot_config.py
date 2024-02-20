@@ -398,6 +398,11 @@ class Cfg(PrefixProto, cli=False):
         ref_env = 0
         pos = [10, 0, 6]  # [m]
         lookat = [11., 5, 3.]  # [m]
+        cam_env_ids = [0]
+        cam_view_width = 720                     # The resolution of camera sensor.
+        cam_view_height = 480
+        cam_offset = [-5.0, -5.0, 5.0]
+        cam_max_record_steps = 1500
 
     class sim(PrefixProto, cli=False):
         dt = 0.005

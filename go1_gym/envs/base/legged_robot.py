@@ -1,5 +1,6 @@
 # License: see [LICENSE, LICENSES/legged_gym/LICENSE]
 
+from moviepy.editor import ImageSequenceClip
 import os
 from typing import Dict
 
@@ -17,7 +18,7 @@ from .legged_robot_config import Cfg
 
 
 class LeggedRobot(BaseTask):
-    def __init__(self, cfg: Cfg, sim_params, physics_engine, sim_device, headless, eval_cfg=None,
+    def __init__(self, cfg: Cfg, sim_params, physics_engine, sim_device, headless, temp_cap_dir, eval_cfg=None, enable_camera_sensor: bool = False,
                  initial_dynamics_dict=None):
         """ Parses the provided config file,
             calls create_sim() (which creates, simulation, terrain and environments),
@@ -34,6 +35,7 @@ class LeggedRobot(BaseTask):
         self.cfg = cfg
         self.eval_cfg = eval_cfg
         self.sim_params = sim_params
+        self.temp_cap_dir = temp_cap_dir
         self.height_samples = None
         self.debug_viz = False
         self.init_done = False
@@ -41,7 +43,7 @@ class LeggedRobot(BaseTask):
         if eval_cfg is not None: self._parse_cfg(eval_cfg)
         self._parse_cfg(self.cfg)
 
-        super().__init__(self.cfg, sim_params, physics_engine, sim_device, headless, self.eval_cfg)
+        super().__init__(self.cfg, sim_params, physics_engine, sim_device, headless, self.eval_cfg, enable_camera_sensor)
 
         self._init_command_distribution(torch.arange(self.num_envs, device=self.device))
 
@@ -71,6 +73,13 @@ class LeggedRobot(BaseTask):
         self.prev_base_lin_vel = self.base_lin_vel.clone()
         self.prev_foot_velocities = self.foot_velocities.clone()
         self.render_gui()
+        if self.enable_camera_sensor and self.recorder_on:
+            for i in range(len(self.cam_env_ids)):
+                self.capture_image(self.cam_env_ids[i], os.path.join(self.temp_cap_dir, "{}_{}.png".format(self.cam_env_ids[i], self.recording_step)))
+            self.recording_step += 1
+            if self.recording_step > self.cfg.viewer.cam_max_record_steps:
+                print("The recording process exceeds maximal capacity, automatically stop recording.")
+                self.stop_video_recording()
         for _ in range(self.cfg.control.decimation):
             self.torques = self._compute_torques(self.actions).view(self.torques.shape)
             self.gym.set_dof_actuation_force_tensor(self.sim, gymtorch.unwrap_tensor(self.torques))
@@ -134,8 +143,6 @@ class LeggedRobot(BaseTask):
 
         if self.viewer and self.enable_viewer_sync and self.debug_viz:
             self._draw_debug_vis()
-
-        self._render_headless()
 
     def check_termination(self):
         """ Check if environments need to be reset
@@ -1009,20 +1016,6 @@ class LeggedRobot(BaseTask):
                                                      gymtorch.unwrap_tensor(self.root_states),
                                                      gymtorch.unwrap_tensor(env_ids_int32), len(env_ids_int32))
 
-        if cfg.env.record_video and 0 in env_ids:
-            if self.complete_video_frames is None:
-                self.complete_video_frames = []
-            else:
-                self.complete_video_frames = self.video_frames[:]
-            self.video_frames = []
-
-        if cfg.env.record_video and self.eval_cfg is not None and self.num_train_envs in env_ids:
-            if self.complete_video_frames_eval is None:
-                self.complete_video_frames_eval = []
-            else:
-                self.complete_video_frames_eval = self.video_frames_eval[:]
-            self.video_frames_eval = []
-
     def _push_robots(self, env_ids, cfg):
         """ Random pushes the robots. Emulates an impulse by setting a randomized base velocity.
         """
@@ -1226,6 +1219,9 @@ class LeggedRobot(BaseTask):
         self.base_ang_vel = quat_rotate_inverse(self.base_quat, self.root_states[:self.num_envs, 10:13])
         self.projected_gravity = quat_rotate_inverse(self.base_quat, self.gravity_vec)
 
+        # Video recording buffers.
+        self.recording_step = 0
+        
         # joint positions offsets and PD gains
         self.default_dof_pos = torch.zeros(self.num_dof, dtype=torch.float, device=self.device, requires_grad=False)
         for i in range(self.num_dofs):
@@ -1523,6 +1519,10 @@ class LeggedRobot(BaseTask):
         dof_props_asset = self.gym.get_asset_dof_properties(self.robot_asset)
         rigid_shape_props_asset = self.gym.get_asset_rigid_shape_properties(self.robot_asset)
 
+        camera_properties = gymapi.CameraProperties()
+        camera_properties.width = self.cfg.viewer.cam_view_width
+        camera_properties.height = self.cfg.viewer.cam_view_height
+
         # save body names from the asset
         body_names = self.gym.get_asset_rigid_body_names(self.robot_asset)
         self.dof_names = self.gym.get_asset_dof_names(self.robot_asset)
@@ -1552,6 +1552,9 @@ class LeggedRobot(BaseTask):
         self.imu_sensor_handles = []
         self.envs = []
 
+        if self.enable_camera_sensor:
+            self.camera_handles = []
+
         self.default_friction = rigid_shape_props_asset[1].friction
         self.default_restitution = rigid_shape_props_asset[1].restitution
         self._init_custom_buffers__()
@@ -1580,6 +1583,16 @@ class LeggedRobot(BaseTask):
             self.envs.append(env_handle)
             self.actor_handles.append(anymal_handle)
 
+            # create camera handle.
+            if self.enable_camera_sensor:
+                camera_target = self.env_origins[i].clone()
+                camera_position = self.env_origins[i].clone() + torch.tensor(self.cfg.viewer.cam_offset, requires_grad=False, device=self.sim_device)
+                camera_position = gymapi.Vec3(*camera_position)
+                camera_target = gymapi.Vec3(*camera_target)
+                camera_handle = self.gym.create_camera_sensor(env_handle, camera_properties)
+                self.gym.set_camera_location(camera_handle, env_handle, camera_position, camera_target)
+                self.camera_handles.append(camera_handle)
+
         self.feet_indices = torch.zeros(len(self.feet_names), dtype=torch.long, device=self.device, requires_grad=False)
         for i in range(len(self.feet_names)):
             self.feet_indices[i] = self.gym.find_actor_rigid_body_handle(self.envs[0], self.actor_handles[0],
@@ -1598,25 +1611,6 @@ class LeggedRobot(BaseTask):
             self.termination_contact_indices[i] = self.gym.find_actor_rigid_body_handle(self.envs[0],
                                                                                         self.actor_handles[0],
                                                                                         termination_contact_names[i])
-        # if recording video, set up camera
-        if self.cfg.env.record_video:
-            self.camera_props = gymapi.CameraProperties()
-            self.camera_props.width = 360
-            self.camera_props.height = 240
-            self.rendering_camera = self.gym.create_camera_sensor(self.envs[0], self.camera_props)
-            self.gym.set_camera_location(self.rendering_camera, self.envs[0], gymapi.Vec3(1.5, 1, 3.0),
-                                         gymapi.Vec3(0, 0, 0))
-            if self.eval_cfg is not None:
-                self.rendering_camera_eval = self.gym.create_camera_sensor(self.envs[self.num_train_envs],
-                                                                           self.camera_props)
-                self.gym.set_camera_location(self.rendering_camera_eval, self.envs[self.num_train_envs],
-                                             gymapi.Vec3(1.5, 1, 3.0),
-                                             gymapi.Vec3(0, 0, 0))
-        self.video_writer = None
-        self.video_frames = []
-        self.video_frames_eval = []
-        self.complete_video_frames = []
-        self.complete_video_frames_eval = []
 
     def render(self, mode="rgb_array"):
         assert mode == "rgb_array"
@@ -1628,59 +1622,6 @@ class LeggedRobot(BaseTask):
         img = self.gym.get_camera_image(self.sim, self.envs[0], self.rendering_camera, gymapi.IMAGE_COLOR)
         w, h = img.shape
         return img.reshape([w, h // 4, 4])
-
-    def _render_headless(self):
-        if self.record_now and self.complete_video_frames is not None and len(self.complete_video_frames) == 0:
-            bx, by, bz = self.root_states[0, 0], self.root_states[0, 1], self.root_states[0, 2]
-            self.gym.set_camera_location(self.rendering_camera, self.envs[0], gymapi.Vec3(bx, by - 1.0, bz + 1.0),
-                                         gymapi.Vec3(bx, by, bz))
-            self.video_frame = self.gym.get_camera_image(self.sim, self.envs[0], self.rendering_camera,
-                                                         gymapi.IMAGE_COLOR)
-            self.video_frame = self.video_frame.reshape((self.camera_props.height, self.camera_props.width, 4))
-            self.video_frames.append(self.video_frame)
-
-        if self.record_eval_now and self.complete_video_frames_eval is not None and len(
-                self.complete_video_frames_eval) == 0:
-            if self.eval_cfg is not None:
-                bx, by, bz = self.root_states[self.num_train_envs, 0], self.root_states[self.num_train_envs, 1], \
-                             self.root_states[self.num_train_envs, 2]
-                self.gym.set_camera_location(self.rendering_camera_eval, self.envs[self.num_train_envs],
-                                             gymapi.Vec3(bx, by - 1.0, bz + 1.0),
-                                             gymapi.Vec3(bx, by, bz))
-                self.video_frame_eval = self.gym.get_camera_image(self.sim, self.envs[self.num_train_envs],
-                                                                  self.rendering_camera_eval,
-                                                                  gymapi.IMAGE_COLOR)
-                self.video_frame_eval = self.video_frame_eval.reshape(
-                    (self.camera_props.height, self.camera_props.width, 4))
-                self.video_frames_eval.append(self.video_frame_eval)
-
-    def start_recording(self):
-        self.complete_video_frames = None
-        self.record_now = True
-
-    def start_recording_eval(self):
-        self.complete_video_frames_eval = None
-        self.record_eval_now = True
-
-    def pause_recording(self):
-        self.complete_video_frames = []
-        self.video_frames = []
-        self.record_now = False
-
-    def pause_recording_eval(self):
-        self.complete_video_frames_eval = []
-        self.video_frames_eval = []
-        self.record_eval_now = False
-
-    def get_complete_frames(self):
-        if self.complete_video_frames is None:
-            return []
-        return self.complete_video_frames
-
-    def get_complete_frames_eval(self):
-        if self.complete_video_frames_eval is None:
-            return []
-        return self.complete_video_frames_eval
 
     def _get_env_origins(self, env_ids, cfg):
         """ Sets environment origins. On rough terrain the origins are defined by the terrain platforms.
@@ -1814,3 +1755,29 @@ class LeggedRobot(BaseTask):
         heights = torch.min(heights, heights3)
 
         return heights.view(len(env_ids), -1) * self.terrain.cfg.vertical_scale
+    
+    def capture_image(self, env_id: int, temp_path: str):
+        """
+        Args:
+            env_id: The environment id where an image is captured.
+            temp_path: The path for saving the captured frame.
+        """
+        if self.enable_camera_sensor:
+            self.gym.write_camera_image_to_file(self.sim, self.envs[env_id], self.camera_handles[env_id], gymapi.IMAGE_COLOR, temp_path)
+        else:
+            print("Camera sensor is not enabled, so cameras are not added to the environments.")
+            self.stop_video_recording()
+    
+    def start_video_recording(self):
+        self.recorder_on = True
+    
+    def stop_video_recording(self, video_path: list = None):
+        self.recorder_on = False
+        if video_path is not None:
+            if len(video_path) != len(self.cam_env_ids):
+                raise ValueError("The number of path to save video should be the same number as activated cameras.")
+            for i in range(len(self.cam_env_ids)):
+                file_sequence = [os.path.join(self.temp_cap_dir, "{}_{}.png".format(self.cam_env_ids[i], j)) for j in range(self.recording_step)]
+                clip = ImageSequenceClip(file_sequence, fps=int(1 / self.dt))
+                clip.write_videofile(os.path.join(video_path[i]))
+        self.recording_step = 0

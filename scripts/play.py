@@ -72,7 +72,6 @@ def load_env(logdir, headless=False):
 
     Cfg.env.num_recording_envs = 1
     Cfg.env.num_envs = 1
-    Cfg.env.zero_out = True
 
     Cfg.terrain.num_rows = 5
     Cfg.terrain.num_cols = 5
@@ -85,9 +84,15 @@ def load_env(logdir, headless=False):
     Cfg.domain_rand.randomize_lag_timesteps = True
     Cfg.control.control_type = "actuator_net"
 
+    # Do camera recording in play:
+    Cfg.viewer.cam_env_ids = [0]
+    enable_camera_viewer = False
+    temp_cap_dir = os.path.join(MINI_GYM_ROOT_DIR, logdir, "temp_cap_dir")
+    os.makedirs(temp_cap_dir, exist_ok=True)
+
     from go1_gym.envs.wrappers.history_wrapper import HistoryWrapper
 
-    env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=headless, cfg=Cfg)
+    env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=headless, cfg=Cfg, enable_camera_sensor=True, temp_cap_dir=temp_cap_dir)
     env = HistoryWrapper(env)
 
     # load policy
@@ -131,6 +136,8 @@ def play_go1(model_dir, test_speed, headless=True):
 
     logger = Logger(env.env.dt, env.env.dof_names, env.feet_names, test_speed, model_dir, 200)
     obs = env.reset()
+
+    env.env.start_video_recording()
 
     for i in tqdm(range(num_eval_steps)):
         with torch.no_grad():
@@ -181,6 +188,9 @@ def play_go1(model_dir, test_speed, headless=True):
         joint_positions[i] = env.dof_pos[0, :].cpu()
     
     logger.plot_save_states("", [0])
+
+    video_save_paths = [os.path.join(model_dir, "analysis", f"{test_speed}_env_{i}.mp4") for i in env.env.cfg.viewer.cam_env_ids]
+    env.env.stop_video_recording(video_save_paths)
 
 
 if __name__ == '__main__':
