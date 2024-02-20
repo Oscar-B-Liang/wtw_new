@@ -18,7 +18,7 @@ from .legged_robot_config import Cfg
 
 
 class LeggedRobot(BaseTask):
-    def __init__(self, cfg: Cfg, sim_params, physics_engine, sim_device, headless, temp_cap_dir, eval_cfg=None,
+    def __init__(self, cfg: Cfg, sim_params, physics_engine, sim_device, headless, temp_cap_dir, eval_cfg=None, enable_camera_sensor: bool = False,
                  initial_dynamics_dict=None):
         """ Parses the provided config file,
             calls create_sim() (which creates, simulation, terrain and environments),
@@ -43,7 +43,7 @@ class LeggedRobot(BaseTask):
         if eval_cfg is not None: self._parse_cfg(eval_cfg)
         self._parse_cfg(self.cfg)
 
-        super().__init__(self.cfg, sim_params, physics_engine, sim_device, headless, self.eval_cfg)
+        super().__init__(self.cfg, sim_params, physics_engine, sim_device, headless, self.eval_cfg, enable_camera_sensor)
 
         self._init_command_distribution(torch.arange(self.num_envs, device=self.device))
 
@@ -143,8 +143,6 @@ class LeggedRobot(BaseTask):
 
         if self.viewer and self.enable_viewer_sync and self.debug_viz:
             self._draw_debug_vis()
-
-        self._render_headless()
 
     def check_termination(self):
         """ Check if environments need to be reset
@@ -1521,6 +1519,10 @@ class LeggedRobot(BaseTask):
         dof_props_asset = self.gym.get_asset_dof_properties(self.robot_asset)
         rigid_shape_props_asset = self.gym.get_asset_rigid_shape_properties(self.robot_asset)
 
+        camera_properties = gymapi.CameraProperties()
+        camera_properties.width = self.cfg.viewer.cam_view_width
+        camera_properties.height = self.cfg.viewer.cam_view_height
+
         # save body names from the asset
         body_names = self.gym.get_asset_rigid_body_names(self.robot_asset)
         self.dof_names = self.gym.get_asset_dof_names(self.robot_asset)
@@ -1550,6 +1552,9 @@ class LeggedRobot(BaseTask):
         self.imu_sensor_handles = []
         self.envs = []
 
+        if self.enable_camera_sensor:
+            self.camera_handles = []
+
         self.default_friction = rigid_shape_props_asset[1].friction
         self.default_restitution = rigid_shape_props_asset[1].restitution
         self._init_custom_buffers__()
@@ -1577,6 +1582,16 @@ class LeggedRobot(BaseTask):
             self.gym.set_actor_rigid_body_properties(env_handle, anymal_handle, body_props, recomputeInertia=True)
             self.envs.append(env_handle)
             self.actor_handles.append(anymal_handle)
+
+            # create camera handle.
+            if self.enable_camera_sensor:
+                camera_target = self.env_origins[i].clone()
+                camera_position = self.env_origins[i].clone() + torch.tensor(self.cfg.viewer.cam_offset, requires_grad=False, device=self.sim_device)
+                camera_position = gymapi.Vec3(*camera_position)
+                camera_target = gymapi.Vec3(*camera_target)
+                camera_handle = self.gym.create_camera_sensor(env_handle, camera_properties)
+                self.gym.set_camera_location(camera_handle, env_handle, camera_position, camera_target)
+                self.camera_handles.append(camera_handle)
 
         self.feet_indices = torch.zeros(len(self.feet_names), dtype=torch.long, device=self.device, requires_grad=False)
         for i in range(len(self.feet_names)):
