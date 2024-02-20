@@ -378,9 +378,11 @@ class LeggedRobot(BaseTask):
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
         
         # Zero out unnecessary observation buffers.
-        if self.cfg.env.zero_out:
+        if self.cfg.env.commands_mask == "zero_out":
             self.obs_buf[:, 6: 18] = 0
             self.obs_buf[:, 66: 70] = 0
+        elif self.cfg.env.commands_mask == "del":
+            self.obs_buf = torch.hstack([self.obs_buf[:, :6], self.obs_buf[:, 18:]])
 
         # build privileged obs
 

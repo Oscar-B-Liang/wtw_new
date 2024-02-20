@@ -205,4 +205,11 @@ class CoRLRewards:
         # Reward less energy consumption.
         # The torque here is the actuation command torque applied to the joints.
         energy_consume = torch.sum(torch.abs(self.env.dof_vel * self.env.torques), dim=1)
-        return torch.exp(-energy_consume / self.env.cfg.rewards.energy_sigma)
+        return torch.exp(-energy_consume / self.env.cfg.reward_scales.energy_sigma)
+
+    def _reward_energy_legs(self):
+        # Reward less energy consumption.
+        # The torque here is the actuation command torque applied to the joints.
+        max_leg_energy_consume = torch.abs(self.env.dof_vel * self.env.torques).reshape(-1, 4, 3).sum(dim=2).max(dim=1).values
+        return torch.exp(-max_leg_energy_consume / self.env.cfg.reward_scales.energy_legs_sigma)
+    

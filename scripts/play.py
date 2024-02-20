@@ -138,15 +138,16 @@ def play_go1(model_dir, test_speed, headless=True):
         env.commands[:, 0] = x_vel_cmd
         env.commands[:, 1] = y_vel_cmd
         env.commands[:, 2] = yaw_vel_cmd
-        env.commands[:, 3] = body_height_cmd
-        env.commands[:, 4] = step_frequency_cmd
-        env.commands[:, 5:8] = gait
-        # env.commands[:, 8] = 0.5
-        env.commands[:, 8] = 0.0
-        env.commands[:, 9] = footswing_height_cmd
-        env.commands[:, 10] = pitch_cmd
-        env.commands[:, 11] = roll_cmd
-        env.commands[:, 12] = stance_width_cmd
+        # env.commands[:, 3] = body_height_cmd
+        # env.commands[:, 4] = step_frequency_cmd
+        # env.commands[:, 5:8] = gait
+        # # env.commands[:, 8] = 0.5
+        # env.commands[:, 8] = 0.0
+        # env.commands[:, 9] = footswing_height_cmd
+        # env.commands[:, 10] = pitch_cmd
+        # env.commands[:, 11] = roll_cmd
+        # env.commands[:, 12] = stance_width_cmd
+        env.commands = env.commands[:, :3]
         obs, rew, done, info = env.step(actions)
 
         log_dict = {
@@ -173,7 +174,7 @@ def play_go1(model_dir, test_speed, headless=True):
         log_dict['dof_vel'] = env.env.dof_vel.cpu().numpy()
         log_dict['dof_acc'] = env.env.dof_acc.cpu().numpy()
         log_dict['dof_torque'] = env.env.torques.detach().clone().cpu().numpy()
-        log_dict['action_scaled'] = env.env.actions.detach().clone().cpu().numpy() * env.env.cfg.control.action_scale
+        log_dict['action_scaled'] = env.env.actions.detach().clone().cpu().numpy() # * env_cfg.control.action_scale
         logger.log_states(log_dict)
 
         measured_x_vels[i] = env.base_lin_vel[0, 0]
@@ -187,7 +188,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     # model_dir is the relative path starting from this repo root.
     parser.add_argument("--device", type=int, default=0)
-    parser.add_argument("--model_dir", type=str, required=True)
+    parser.add_argument("--model_dir", type=str, default="checkpoints/train_min_cmd/2024-02-19-044826.014731")
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--test_speed", type=float, default=1.0)
     args = parser.parse_args()
