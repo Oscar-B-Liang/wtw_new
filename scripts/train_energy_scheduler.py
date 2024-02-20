@@ -16,24 +16,24 @@ def train_schedule(gpu_list):
     # Logging directory is checkpoints/lb_fixed_vel_terrain_sign_change_energy
 
     logger = get_logger('checkpoints', 'scheduler.log')
-    alphas = np.arange(0.3, 0.8, 0.1).tolist()
-    sigmas = np.arange(300, 900, 100).tolist()
-    combinations = itertools.product(alphas, sigmas)
+    alphas = np.arange(0.0, 1.0, 0.1).tolist()
+    # sigmas = np.arange(300, 900, 100).tolist()
+    # combinations = itertools.product(alphas, sigmas)
     BASH_COMMAND_LIST = []
 
     # First layer for loop: alpha value.
-    for (alpha, sigma) in combinations:
+    for alpha in alphas:
         BASH_COMMAND_LIST.append(
-            f"python train_energy.py --headless --energy {alpha:.3f} --energy_sigma {sigma:.3f}"
+            f"python train_energy_vz_axy.py --headless --energy {alpha:.3f} --energy_sigma 500.0"
         )
 
     dispatch_thread = DispatchThread(
         "search energy weight and sigma",
         BASH_COMMAND_LIST[:],
         logger,
-        gpu_m_th=15000,
+        gpu_m_th=12000,
         gpu_list=gpu_list,
-        maxcheck=5
+        maxcheck=7
     )
 
     # Start new Threads
@@ -45,5 +45,5 @@ def train_schedule(gpu_list):
 
 
 if __name__ == "__main__":
-    gpu_list = [1, 2]
+    gpu_list = [0, 1]
     train_schedule(gpu_list)

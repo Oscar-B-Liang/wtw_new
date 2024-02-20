@@ -107,7 +107,7 @@ def play_go1(model_dir, test_speed, headless=True):
     env, policy = load_env(model_dir, headless=headless)
     os.makedirs(os.path.join(model_dir, "analysis"), exist_ok=True)
 
-    num_eval_steps = 250
+    num_eval_steps = 1000
     gaits = {
         "pronking": [0, 0, 0],
         "trotting": [0.5, 0, 0],
@@ -157,11 +157,12 @@ def play_go1(model_dir, test_speed, headless=True):
         env.commands = env.commands[:, :3]
         obs, rew, done, info = env.step(actions)
 
-        log_dict = {
-            'command_x': env.env.commands[:, 0].cpu().numpy(),
-            'command_y': env.env.commands[:, 1].cpu().numpy(),
-            'command_yaw': env.env.commands[:, 2].cpu().numpy(),
-        }
+        if i >= 20 and i <= 300:
+            log_dict = {
+                'command_x': env.env.commands[:, 0].cpu().numpy(),
+                'command_y': env.env.commands[:, 1].cpu().numpy(),
+                'command_yaw': env.env.commands[:, 2].cpu().numpy(),
+            }
 
         log_dict['base_pos_x'] = env.env.base_pos[:, 0].cpu().numpy()
         log_dict['base_pos_y'] = env.env.base_pos[:, 1].cpu().numpy()
