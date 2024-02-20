@@ -85,6 +85,10 @@ def load_env(logdir, headless=False):
     Cfg.domain_rand.randomize_lag_timesteps = True
     Cfg.control.control_type = "actuator_net"
 
+    # Do camera recording in play:
+    Cfg.viewer.cam_env_ids = [15, 24]
+    enable_camera_viewer = False
+
     from go1_gym.envs.wrappers.history_wrapper import HistoryWrapper
 
     env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=headless, cfg=Cfg)
