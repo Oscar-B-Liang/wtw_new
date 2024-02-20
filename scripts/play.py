@@ -107,7 +107,7 @@ def play_go1(model_dir, test_speed, headless=True):
     env, policy = load_env(model_dir, headless=headless)
     os.makedirs(os.path.join(model_dir, "analysis"), exist_ok=True)
 
-    num_eval_steps = 1000
+    num_eval_steps = 500
     gaits = {
         "pronking": [0, 0, 0],
         "trotting": [0.5, 0, 0],
@@ -164,26 +164,26 @@ def play_go1(model_dir, test_speed, headless=True):
                 'command_yaw': env.env.commands[:, 2].cpu().numpy(),
             }
 
-        log_dict['base_pos_x'] = env.env.base_pos[:, 0].cpu().numpy()
-        log_dict['base_pos_y'] = env.env.base_pos[:, 1].cpu().numpy()
-        log_dict['base_pos_z'] = env.env.base_pos[:, 2].cpu().numpy()
-        log_dict['base_vel_x'] = env.env.base_lin_vel[:, 0].cpu().numpy()
-        log_dict['base_vel_y'] = env.env.base_lin_vel[:, 1].cpu().numpy()
-        log_dict['base_vel_z'] = env.env.base_lin_vel[:, 2].cpu().numpy()
-        log_dict['base_vel_roll'] = env.env.base_ang_vel[:, 0].cpu().numpy()
-        log_dict['base_vel_pitch'] = env.env.base_ang_vel[:, 1].cpu().numpy()
-        log_dict['base_vel_yaw'] = env.env.base_ang_vel[:, 2].cpu().numpy()
-        log_dict['contact_forces_x'] = env.env.contact_forces[:, env.env.feet_indices, 0].cpu().numpy()
-        log_dict['contact_forces_y'] = env.env.contact_forces[:, env.env.feet_indices, 1].cpu().numpy()
-        log_dict['contact_forces_z'] = env.env.contact_forces[:, env.env.feet_indices, 2].cpu().numpy()
-        log_dict['reward'] = env.env.rew_buf[:].detach().clone().cpu().numpy()
-        log_dict['energy_consume'] = env.env.energy_consume[:].cpu().numpy()
-        log_dict['dof_pos'] = env.env.dof_pos.cpu().numpy()
-        log_dict['dof_vel'] = env.env.dof_vel.cpu().numpy()
-        log_dict['dof_acc'] = env.env.dof_acc.cpu().numpy()
-        log_dict['dof_torque'] = env.env.torques.detach().clone().cpu().numpy()
-        log_dict['action_scaled'] = env.env.actions.detach().clone().cpu().numpy() # * env_cfg.control.action_scale
-        logger.log_states(log_dict)
+            log_dict['base_pos_x'] = env.env.base_pos[:, 0].cpu().numpy()
+            log_dict['base_pos_y'] = env.env.base_pos[:, 1].cpu().numpy()
+            log_dict['base_pos_z'] = env.env.base_pos[:, 2].cpu().numpy()
+            log_dict['base_vel_x'] = env.env.base_lin_vel[:, 0].cpu().numpy()
+            log_dict['base_vel_y'] = env.env.base_lin_vel[:, 1].cpu().numpy()
+            log_dict['base_vel_z'] = env.env.base_lin_vel[:, 2].cpu().numpy()
+            log_dict['base_vel_roll'] = env.env.base_ang_vel[:, 0].cpu().numpy()
+            log_dict['base_vel_pitch'] = env.env.base_ang_vel[:, 1].cpu().numpy()
+            log_dict['base_vel_yaw'] = env.env.base_ang_vel[:, 2].cpu().numpy()
+            log_dict['contact_forces_x'] = env.env.contact_forces[:, env.env.feet_indices, 0].cpu().numpy()
+            log_dict['contact_forces_y'] = env.env.contact_forces[:, env.env.feet_indices, 1].cpu().numpy()
+            log_dict['contact_forces_z'] = env.env.contact_forces[:, env.env.feet_indices, 2].cpu().numpy()
+            log_dict['reward'] = env.env.rew_buf[:].detach().clone().cpu().numpy()
+            log_dict['energy_consume'] = env.env.energy_consume[:].cpu().numpy()
+            log_dict['dof_pos'] = env.env.dof_pos.cpu().numpy()
+            log_dict['dof_vel'] = env.env.dof_vel.cpu().numpy()
+            log_dict['dof_acc'] = env.env.dof_acc.cpu().numpy()
+            log_dict['dof_torque'] = env.env.torques.detach().clone().cpu().numpy()
+            log_dict['action_scaled'] = env.env.actions.detach().clone().cpu().numpy() # * env_cfg.control.action_scale
+            logger.log_states(log_dict)
 
         measured_x_vels[i] = env.base_lin_vel[0, 0]
         joint_positions[i] = env.dof_pos[0, :].cpu()
