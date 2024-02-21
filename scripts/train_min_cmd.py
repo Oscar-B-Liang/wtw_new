@@ -118,10 +118,16 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     stem = Path(__file__).stem
-    logger.configure(
-        logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-speed-{args.train_speed:.1f}'),
-        root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
-    )
+    if args.train_speed is None:
+        logger.configure(
+            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}'),
+            root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
+        )
+    else:
+        logger.configure(
+            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-speed-{args.train_speed:.1f}'),
+            root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
+        )
     logger.log_text("""
                 charts: 
                 - yKey: train/episode/rew_total/mean
