@@ -16,7 +16,7 @@ def train_schedule(gpu_list):
     # Logging directory is checkpoints/lb_fixed_vel_terrain_sign_change_energy
 
     logger = get_logger('checkpoints', 'scheduler.log')
-    alphas = np.arange(1.2, 1.5, 0.1).tolist()
+    alphas = np.arange(0.5, 1.5, 0.1).tolist()
     sigmas = np.arange(50, 300, 50).tolist()
     velocities = [0.5, 1.0, 1.5]
     combinations = itertools.product(alphas, sigmas, velocities)
@@ -25,7 +25,7 @@ def train_schedule(gpu_list):
     # First layer for loop: alpha value.
     for (alpha, sigma, velocity) in combinations:
         BASH_COMMAND_LIST.append(
-            f"python train_cmd_energy_only.py --headless --energy {alpha:.1f} --sigma {sigma:.1f} --train_speed {velocity:.1f}"
+            f"python train_min_cmd.py --headless --energy {alpha:.1f} --sigma {sigma:.1f} --train_speed {velocity:.1f}"
         )
 
     dispatch_thread = DispatchThread(

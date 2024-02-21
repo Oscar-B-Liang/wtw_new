@@ -69,11 +69,19 @@ def train_go1(args):
     Cfg.reward_scales.tracking_contacts_shaped = 0.0
     Cfg.reward_scales.energy = 0.0 # 0.5
     Cfg.reward_scales.energy_sigma = 300.0
-    Cfg.reward_scales.energy_legs = 0.7
-    Cfg.reward_scales.energy_legs_sigma = 100.0
+    Cfg.reward_scales.energy_legs = args.energy
+    Cfg.reward_scales.energy_legs_sigma = args.sigma
     Cfg.reward_scales.energy_expenditure = 0.0
     Cfg.reward_scales.survival = 0.0
     Cfg.reward_scales.base_motion = 0.0
+
+    Cfg.commands.lin_vel_x = [args.train_speed, args.train_speed]
+    Cfg.commands.lin_vel_y = [0.0, 0.0]
+    Cfg.commands.ang_vel_yaw = [0.0, 0.0]
+
+    Cfg.commands.limit_vel_x = [args.train_speed, args.train_speed]
+    Cfg.commands.limit_vel_y = [0.0, 0.0]
+    Cfg.commands.limit_vel_yaw = [0.0, 0.0]
 
     env = VelocityTrackingEasyEnv(sim_device=f'cuda:{args.device}', headless=args.headless, cfg=Cfg)
 
@@ -97,11 +105,14 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--headless', action="store_true")
     parser.add_argument('--device', default=0, type=int)
+    parser.add_argument('--energy', default=0.7, type=float)
+    parser.add_argument('--sigma', default=100, type=float)
+    parser.add_argument('--train_speed', default=1.0, type=float)
     args = parser.parse_args()
 
     stem = Path(__file__).stem
     logger.configure(
-        logger.utcnow(f'{stem}/%Y-%m-%d-%H%M%S.%f'),
+        logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-speed-{args.train_speed:.1f}'),
         root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
     )
     logger.log_text("""
