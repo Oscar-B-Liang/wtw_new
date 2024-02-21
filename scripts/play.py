@@ -188,7 +188,7 @@ def play_go1(model_dir, test_speed, headless=True):
         measured_x_vels[i] = env.base_lin_vel[0, 0]
         joint_positions[i] = env.dof_pos[0, :].cpu()
     
-    logger.plot_save_states("", [0])
+    logger.plot_save_states(f"{test_speed}", [0])
 
     video_save_paths = [os.path.join(model_dir, "analysis", f"{test_speed}_env_{i}.mp4") for i in env.env.cfg.viewer.cam_env_ids]
     env.env.stop_video_recording(video_save_paths)
