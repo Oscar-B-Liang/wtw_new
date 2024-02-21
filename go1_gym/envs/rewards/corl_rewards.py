@@ -213,3 +213,9 @@ class CoRLRewards:
         max_leg_energy_consume = torch.abs(self.env.dof_vel * self.env.torques).reshape(-1, 4, 3).sum(dim=2).max(dim=1).values
         return torch.exp(-max_leg_energy_consume / self.env.cfg.reward_scales.energy_legs_sigma)
     
+    def _reward_tracking_lin_vel_dep(self):
+        # Tracking of linear velocity commands (xy axes)
+        # Adaptive to target velocity.
+        lin_vel_error = torch.sum(torch.square(self.env.commands[:, :2] - self.env.base_lin_vel[:, :2]), dim=1)
+        return torch.exp(-3.0 * lin_vel_error / (self.env.commands[:, 0] ** 2))
+    

@@ -157,7 +157,7 @@ def play_go1(model_dir, test_speed, headless=True):
         env.commands = env.commands[:, :3]
         obs, rew, done, info = env.step(actions)
 
-        if i >= 20 and i <= 300:
+        if i >= 100 and i <= 400:
             log_dict = {
                 'command_x': env.env.commands[:, 0].cpu().numpy(),
                 'command_y': env.env.commands[:, 1].cpu().numpy(),
