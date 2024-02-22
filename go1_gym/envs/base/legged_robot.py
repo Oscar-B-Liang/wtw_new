@@ -1243,7 +1243,7 @@ class LeggedRobot(BaseTask):
 
         if self.cfg.control.control_type == "actuator_net":
             actuator_path = f'{os.path.dirname(os.path.dirname(os.path.realpath(__file__)))}/../../resources/actuator_nets/unitree_go1.pt'
-            actuator_network = torch.jit.load(actuator_path).to(self.device)
+            actuator_network = torch.jit.load(actuator_path, map_location=self.device)
 
             def eval_actuator_network(joint_pos, joint_pos_last, joint_pos_last_last, joint_vel, joint_vel_last,
                                       joint_vel_last_last):
