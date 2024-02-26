@@ -70,6 +70,9 @@ def load_env(logdir, headless=False):
     Cfg.domain_rand.randomize_joint_friction = False
     Cfg.domain_rand.randomize_com_displacement = False
 
+    # Cfg.env.commands_mask = "zero_out"
+    # Cfg.reward_scales.energy_sigma = 500
+
     Cfg.env.num_recording_envs = 1
     Cfg.env.num_envs = 1
 

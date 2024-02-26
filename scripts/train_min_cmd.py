@@ -19,8 +19,8 @@ def train_go1(args):
     config_go1(Cfg)
 
     # Task Rewards.
-    Cfg.reward_scales.tracking_lin_vel = 0.0
-    Cfg.reward_scales.tracking_lin_vel_dep = 1.0
+    Cfg.reward_scales.tracking_lin_vel = 1.0
+    Cfg.reward_scales.tracking_lin_vel_dep = 0.0
     Cfg.reward_scales.tracking_ang_vel = 0.5
 
     # Augmented Auxiliary Rewards.
