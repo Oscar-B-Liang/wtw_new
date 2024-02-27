@@ -50,7 +50,7 @@ def train_go1(args):
     # Unparticipated Rewards.
     Cfg.reward_scales.dof_pos = 0.0
     Cfg.reward_scales.feet_impact_vel = 0.0
-    Cfg.reward_scales.orientation = 0.0
+    Cfg.reward_scales.orientation = -args.orientation
     Cfg.reward_scales.feet_contact_forces = 0.0
 
     # Energy rewards.
@@ -112,18 +112,19 @@ if __name__ == '__main__':
     parser.add_argument('--sigma', default=300, type=float)
     parser.add_argument('--energy_leg', default=0.0, type=float)
     parser.add_argument('--sigma_leg', default=100, type=float)
+    parser.add_argument('--orientation', default=0.0, type=float)
     parser.add_argument('--train_speed', default=None, type=float)
     args = parser.parse_args()
 
     stem = Path(__file__).stem
     if args.train_speed is None:
         logger.configure(
-            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}'),
+            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-orientation-{args.orientation:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     else:
         logger.configure(
-            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-speed-{args.train_speed:.1f}'),
+            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-orientation-{args.orientation:.1f}-speed-{args.train_speed:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     logger.log_text("""
