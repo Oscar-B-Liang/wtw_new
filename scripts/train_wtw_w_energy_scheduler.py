@@ -7,18 +7,15 @@ from gpu_utils.gputracker import DispatchThread, get_logger
 def train_schedule(gpu_list):
 
     logger = get_logger('checkpoints', 'scheduler.log')
-    energy_legs = [0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3]
-    energys = [0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3]
+    energys = [0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3]
+    speeds = [0.5, 1.0, 1.5, 2.0]
+    combinations = itertools.combinations(energys, speeds)
     BASH_COMMAND_LIST = []
 
     # First layer for loop: alpha value.
-    for energy_leg in energy_legs:
+    for energy, speed in combinations:
         BASH_COMMAND_LIST.append(
-            f"python train_wtw_w_energy.py --headless --energy_leg {energy_leg:.1f} --orientation 5.0"
-        )
-    for energy in energys:
-        BASH_COMMAND_LIST.append(
-            f"python train_wtw_w_energy.py --headless --energy {energy:.1f} --orientation 5.0"
+            f"python train_wtw_w_energy.py --headless --energy {energy:.1f} --train_speed {speed:.1f} --orientation 5.0"
         )
 
     dispatch_thread = DispatchThread(
