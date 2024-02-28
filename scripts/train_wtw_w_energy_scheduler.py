@@ -14,20 +14,20 @@ def train_schedule(gpu_list):
     # First layer for loop: alpha value.
     for energy_leg in energy_legs:
         BASH_COMMAND_LIST.append(
-            f"python train_wtw_w_energy.py --headless --energy_legs {energy_leg:.1f}"
+            f"python train_wtw_w_energy.py --headless --energy_leg {energy_leg:.1f} --orientation 5.0"
         )
     for energy in energys:
         BASH_COMMAND_LIST.append(
-            f"python train_wtw_w_energy.py --headless --energy {energy:.1f}"
+            f"python train_wtw_w_energy.py --headless --energy {energy:.1f} --orientation 5.0"
         )
 
     dispatch_thread = DispatchThread(
         "search energy weight and sigma",
         BASH_COMMAND_LIST[:],
         logger,
-        gpu_m_th=14000,
+        gpu_m_th=5000,
         gpu_list=gpu_list,
-        maxcheck=5
+        maxcheck=10
     )
 
     # Start new Threads

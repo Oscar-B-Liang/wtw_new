@@ -119,12 +119,12 @@ if __name__ == '__main__':
     stem = Path(__file__).stem
     if args.train_speed is None:
         logger.configure(
-            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-orientation-{args.orientation:.1f}'),
+            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-energy-leg-{args.energy_leg:.1f}-sigma-leg-{args.sigma_leg}-orientation-{args.orientation:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     else:
         logger.configure(
-            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-orientation-{args.orientation:.1f}-speed-{args.train_speed:.1f}'),
+            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-energy-leg-{args.energy_leg:.1f}-sigma-leg-{args.sigma_leg}-orientation-{args.orientation:.1f}-speed-{args.train_speed:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     logger.log_text("""
