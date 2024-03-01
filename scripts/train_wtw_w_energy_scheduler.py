@@ -7,9 +7,9 @@ from gpu_utils.gputracker import DispatchThread, get_logger
 def train_schedule(gpu_list):
 
     logger = get_logger('checkpoints', 'scheduler.log')
-    energys = [0.0, 0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3]
-    speeds = [0.5, 1.0, 1.5, 2.0]
-    combinations = itertools.combinations(energys, speeds)
+    energys = [0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1]
+    speeds = [0.5, 1.0, 1.5, 2.0, 2.5]
+    combinations = itertools.product(energys, speeds)
     BASH_COMMAND_LIST = []
 
     # First layer for loop: alpha value.
@@ -22,7 +22,7 @@ def train_schedule(gpu_list):
         "search energy weight and sigma",
         BASH_COMMAND_LIST[:],
         logger,
-        gpu_m_th=5000,
+        gpu_m_th=2000,
         gpu_list=gpu_list,
         maxcheck=10
     )

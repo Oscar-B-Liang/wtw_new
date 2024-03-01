@@ -20,6 +20,7 @@ def train_go1(args):
 
     # Task Rewards.
     Cfg.reward_scales.tracking_lin_vel = 1.0
+    Cfg.reward_scales.tracking_lin_vel_dep = 0.0
     Cfg.reward_scales.tracking_ang_vel = 0.5
 
     # Augmented Auxiliary Rewards.
@@ -78,13 +79,8 @@ def train_go1(args):
     Cfg.reward_scales.base_motion = 0.0
 
     if args.train_speed is not None:
-        Cfg.commands.lin_vel_x = [args.train_speed, args.train_speed]
-        Cfg.commands.lin_vel_y = [0.0, 0.0]
-        Cfg.commands.ang_vel_yaw = [0.0, 0.0]
-
-        Cfg.commands.limit_vel_x = [args.train_speed, args.train_speed]
-        Cfg.commands.limit_vel_y = [0.0, 0.0]
-        Cfg.commands.limit_vel_yaw = [0.0, 0.0]
+        Cfg.commands.lin_vel_x = [0.0, min(args.train_speed + 0.1, 1.0)]
+        Cfg.commands.limit_vel_x = [0.0, args.train_speed + 0.1]
 
     env = VelocityTrackingEasyEnv(sim_device=f'cuda:{args.device}', headless=args.headless, cfg=Cfg)
 
