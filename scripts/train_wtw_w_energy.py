@@ -79,8 +79,8 @@ def train_go1(args):
     Cfg.reward_scales.base_motion = 0.0
 
     if args.train_speed is not None:
-        Cfg.commands.lin_vel_x = [0.0, min(args.train_speed + 0.1, 1.0)]
-        Cfg.commands.limit_vel_x = [0.0, args.train_speed + 0.1]
+        Cfg.commands.lin_vel_x = [-min(args.train_speed + 0.1, 1.0), min(args.train_speed + 0.1, 1.0)]
+        Cfg.commands.limit_vel_x = [-(args.train_speed + 0.1), args.train_speed + 0.1]
 
     env = VelocityTrackingEasyEnv(sim_device=f'cuda:{args.device}', headless=args.headless, cfg=Cfg)
 

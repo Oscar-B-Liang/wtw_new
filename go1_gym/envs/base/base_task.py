@@ -121,6 +121,8 @@ class BaseTask(gym.Env):
                 elif evt.action == "toggle_viewer_sync" and evt.value > 0:
                     self.enable_viewer_sync = not self.enable_viewer_sync
 
+        if self.viewer or self.enable_camera_sensor:
+
             # fetch results
             if self.device != 'cpu':
                 self.gym.fetch_results(self.sim, True)
