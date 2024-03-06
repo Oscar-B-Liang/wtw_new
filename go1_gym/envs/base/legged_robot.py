@@ -277,6 +277,7 @@ class LeggedRobot(BaseTask):
         self.rew_buf[:] = 0.
         self.rew_buf_pos[:] = 0.
         self.rew_buf_neg[:] = 0.
+
         for i in range(len(self.reward_functions)):
             name = self.reward_names[i]
             rew = self.reward_functions[i]() * self.reward_scales[name]
@@ -290,6 +291,7 @@ class LeggedRobot(BaseTask):
                 self.command_sums[name] += self.reward_scales[name] + rew
             else:
                 self.command_sums[name] += rew
+
         if self.cfg.rewards.only_positive_rewards:
             self.rew_buf[:] = torch.clip(self.rew_buf[:], min=0.)
         elif self.cfg.rewards.only_positive_rewards_ji22_style: #TODO: update
@@ -301,6 +303,10 @@ class LeggedRobot(BaseTask):
             self.rew_buf += rew
             self.episode_sums["termination"] += rew
             self.command_sums["termination"] += rew
+        
+        if self.cfg.rewards.alpha_normalize:
+            rew_top = self.get_energy_top(self.commands[:, 0])
+            self.rew_buf = self.rew_buf / rew_top
 
         self.command_sums["lin_vel_raw"] += self.base_lin_vel[:, 0]
         self.command_sums["ang_vel_raw"] += self.base_ang_vel[:, 2]
@@ -1781,3 +1787,15 @@ class LeggedRobot(BaseTask):
                 clip = ImageSequenceClip(file_sequence, fps=int(1 / self.dt))
                 clip.write_videofile(os.path.join(video_path[i]))
         self.recording_step = 0
+    
+    def get_energy_alpha(self, command_vels):
+        alpha_check_speeds = self.cfg.rewards.alpha_check_speeds
+        alpha_check_values = self.cfg.rewards.alpha_check_values
+        weights = np.interp(command_vels.cpu().numpy(), alpha_check_speeds, alpha_check_values)
+        return torch.tensor(weights, device=self.device)
+    
+    def get_energy_top(self, command_vels):
+        alpha_check_speeds = self.cfg.rewards.alpha_check_speeds
+        alpha_check_scales = self.cfg.rewards.alpha_check_scales
+        weights = np.interp(command_vels.cpu().numpy(), alpha_check_speeds, alpha_check_scales)
+        return torch.tensor(weights, device=self.device)

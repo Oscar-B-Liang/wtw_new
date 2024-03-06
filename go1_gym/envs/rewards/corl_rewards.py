@@ -219,3 +219,8 @@ class CoRLRewards:
         lin_vel_error = torch.sum(torch.square(self.env.commands[:, :2] - self.env.base_lin_vel[:, :2]), dim=1)
         return torch.exp(-3.0 * lin_vel_error / (self.env.commands[:, 0] ** 2))
     
+    def _reward_energy_dep(self):
+        weights = self.env.get_energy_alpha(self.env.commands[:, 0])
+        energy_consumes = torch.sum(torch.abs(self.env.dof_vel * self.env.torques), dim=1)
+        return weights * torch.exp(-energy_consumes / self.env.cfg.reward_scales.energy_sigma)
+    

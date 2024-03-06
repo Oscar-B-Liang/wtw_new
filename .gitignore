@@ -70,3 +70,4 @@ tmp
 *.tar
 
 checkpoints
+plot_scripts/
