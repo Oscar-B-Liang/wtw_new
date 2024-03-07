@@ -148,16 +148,19 @@ def play_go1(model_dir, test_speed, headless=True):
         env.commands[:, 0] = x_vel_cmd
         env.commands[:, 1] = y_vel_cmd
         env.commands[:, 2] = yaw_vel_cmd
-        # env.commands[:, 3] = body_height_cmd
-        # env.commands[:, 4] = step_frequency_cmd
-        # env.commands[:, 5:8] = gait
-        # # env.commands[:, 8] = 0.5
-        # env.commands[:, 8] = 0.0
-        # env.commands[:, 9] = footswing_height_cmd
-        # env.commands[:, 10] = pitch_cmd
-        # env.commands[:, 11] = roll_cmd
-        # env.commands[:, 12] = stance_width_cmd
-        env.commands = env.commands[:, :3]
+        if env.cfg.env.commands_mask == "zero_out":
+            env.commands[:, 3] = body_height_cmd
+            env.commands[:, 4] = step_frequency_cmd
+            env.commands[:, 5:8] = gait
+            env.commands[:, 8] = 0.0
+            env.commands[:, 9] = footswing_height_cmd
+            env.commands[:, 10] = pitch_cmd
+            env.commands[:, 11] = roll_cmd
+            env.commands[:, 12] = stance_width_cmd
+        elif env.cfg.env.commands_mask == "del":
+            env.commands = env.commands[:, :3]
+        else:
+            raise ValueError(f"The commands mask {env.cfg.env.commands_mask} is invalid.")
         obs, rew, done, info = env.step(actions)
 
         if i >= 100 and i <= 400:
