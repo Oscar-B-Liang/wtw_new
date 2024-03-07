@@ -53,6 +53,10 @@ def config_go1(Cnfg: Union[Cfg, Meta]):
     _.terminal_body_height = 0.05
     _.use_terminal_roll_pitch = True
     _.terminal_body_ori = 1.6
+    _.alpha_normalize = False
+    _.alpha_check_speeds = [0.5, 1.0, 1.5, 2.0, 2.5]
+    _.alpha_check_values = [1.3, 1.1, 0.9, 0.9, 0.7]
+    _.alpha_check_scales = [1.45, 1.18, 1.00, 0.81, 0.72]
 
     _.kappa_gait_probs = 0.07
     _.gait_force_sigma = 100.

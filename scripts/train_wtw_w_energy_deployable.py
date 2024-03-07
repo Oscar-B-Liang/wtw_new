@@ -57,15 +57,14 @@ def train_go1(args):
     # Unparticipated Rewards.
     Cfg.reward_scales.dof_pos = 0.0
     Cfg.reward_scales.feet_impact_vel = 0.0
-    Cfg.reward_scales.orientation = -5.0
+    Cfg.reward_scales.orientation = -args.orientation
     Cfg.reward_scales.feet_contact_forces = 0.0
 
     # Energy rewards.
-    Cfg.reward_scales.energy = 0.0
-    Cfg.reward_scales.energy_sigma = 300
-    Cfg.reward_scales.energy_dep = 1.0
-    Cfg.reward_scales.energy_legs = 0.0
-    Cfg.reward_scales.energy_legs_sigma = 100
+    Cfg.reward_scales.energy = args.energy
+    Cfg.reward_scales.energy_sigma = args.sigma
+    Cfg.reward_scales.energy_legs = args.energy_leg
+    Cfg.reward_scales.energy_legs_sigma = args.sigma_leg
 
     # Uncorresponded Rewards.
     Cfg.reward_scales.base_height = 0.0
@@ -85,14 +84,15 @@ def train_go1(args):
     Cfg.reward_scales.survival = 0.0
     Cfg.reward_scales.base_motion = 0.0
 
-    Cfg.rewards.alpha_normalize = True
-    Cfg.rewards.alpha_check_speeds = [0.5, 1.0, 1.5, 2.0, 2.5]
-    Cfg.rewards.alpha_check_values = [1.3, 1.1, 0.9, 0.9, 0.7]
-    Cfg.rewards.alpha_check_scales = [1.45, 1.18, 1.00, 0.81, 0.72]
-
     if args.train_speed is not None:
         Cfg.commands.lin_vel_x = [-min(args.train_speed + 0.1, 1.0), min(args.train_speed + 0.1, 1.0)]
         Cfg.commands.limit_vel_x = [-(args.train_speed + 0.1), args.train_speed + 0.1]
+    
+    Cfg.env.commands_mask = "zero_out"
+    Cfg.env.num_observations = 70
+    Cfg.env.num_scalar_observations = 70
+    Cfg.env.observe_clock_inputs = True
+    Cfg.env.observe_gait_commands = True
 
     env = VelocityTrackingEasyEnv(sim_device=f'cuda:{args.device}', headless=args.headless, cfg=Cfg)
 
@@ -116,6 +116,11 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('--headless', action="store_true")
     parser.add_argument('--device', default=0, type=int)
+    parser.add_argument('--energy', default=0.0, type=float)
+    parser.add_argument('--sigma', default=300, type=float)
+    parser.add_argument('--energy_leg', default=0.0, type=float)
+    parser.add_argument('--sigma_leg', default=100, type=float)
+    parser.add_argument('--orientation', default=5.0, type=float)
     parser.add_argument('--train_speed', default=None, type=float)
     parser.add_argument('--seed', default=0, type=int)
     args = parser.parse_args()
@@ -123,12 +128,12 @@ if __name__ == '__main__':
     stem = Path(__file__).stem
     if args.train_speed is None:
         logger.configure(
-            logger.utcnow(f'{stem}/adaptive-seed-{args.seed}'),
+            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-seed-{args.seed}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     else:
         logger.configure(
-            logger.utcnow(f'{stem}/adaptive-seed-{args.seed}-speed-{args.train_speed:.1f}'),
+            logger.utcnow(f'{stem}/energy-{args.energy:.1f}-sigma-{args.sigma:.1f}-seed-{args.seed}-speed-{args.train_speed:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     logger.log_text("""
