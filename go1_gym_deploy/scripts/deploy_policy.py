@@ -9,8 +9,18 @@ from go1_gym_deploy.utils.cheetah_state_estimator import StateEstimator
 from go1_gym_deploy.utils.command_profile import *
 
 import pathlib
+import io
 
 lc = lcm.LCM("udpm://239.255.76.67:7667?ttl=255")
+
+
+class Local_Unpickler(pkl.Unpickler):
+    def find_class(self, module, name):
+        if module == 'torch.storage' and name == '_load_from_bytes':
+            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+        else:
+            return super().find_class(module, name)
+
 
 def load_and_run_policy(label, experiment_name, max_vel=1.0, max_yaw_vel=1.0):
     # load agent
@@ -18,7 +28,7 @@ def load_and_run_policy(label, experiment_name, max_vel=1.0, max_yaw_vel=1.0):
     logdir = sorted(dirs)[0]
 
     with open(logdir+"/parameters.pkl", 'rb') as file:
-        pkl_cfg = pkl.load(file)
+        pkl_cfg = Local_Unpickler(file).load()
         print(pkl_cfg.keys())
         cfg = pkl_cfg["Cfg"]
         print(cfg.keys())
@@ -55,9 +65,9 @@ def load_and_run_policy(label, experiment_name, max_vel=1.0, max_yaw_vel=1.0):
     deployment_runner.run(max_steps=max_steps, logging=True)
 
 def load_policy(logdir):
-    body = torch.jit.load(logdir + '/checkpoints/body_latest.jit')
+    body = torch.jit.load(logdir + '/checkpoints/body_latest.jit', map_location="cpu")
     import os
-    adaptation_module = torch.jit.load(logdir + '/checkpoints/adaptation_module_latest.jit')
+    adaptation_module = torch.jit.load(logdir + '/checkpoints/adaptation_module_latest.jit', map_location="cpu")
 
     def policy(obs, info):
         i = 0

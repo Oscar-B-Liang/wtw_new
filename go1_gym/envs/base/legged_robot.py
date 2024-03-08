@@ -1371,8 +1371,8 @@ class LeggedRobot(BaseTask):
             for curriculum in self.curricula:
                 curriculum.set_params(lipschitz_threshold=self.cfg.commands.lipschitz_threshold,
                                       binary_phases=self.cfg.commands.binary_phases)
-        self.env_command_bins = np.zeros(len(env_ids), dtype=np.int)
-        self.env_command_categories = np.zeros(len(env_ids), dtype=np.int)
+        self.env_command_bins = np.zeros(len(env_ids), dtype=int)
+        self.env_command_categories = np.zeros(len(env_ids), dtype=int)
         low = np.array(
             [self.cfg.commands.lin_vel_x[0], self.cfg.commands.lin_vel_y[0],
              self.cfg.commands.ang_vel_yaw[0], self.cfg.commands.body_height_cmd[0],

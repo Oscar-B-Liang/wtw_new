@@ -180,7 +180,8 @@ class LCMAgent():
             heights = np.clip(robot_height - 0.5 - self.measured_heights, -1, 1.) * self.obs_scales["height_measurements"]
             ob = np.concatenate((ob, heights), axis=1)
 
-
+        ob[:, 6: 18] = 0.0
+        ob[:, 66: 70] = 0.0
         return torch.tensor(ob, device=self.device).float()
 
     def get_privileged_observations(self):
