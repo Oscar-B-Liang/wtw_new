@@ -160,7 +160,7 @@ class StateEstimator:
         MODE_RIGHT = MODES_RIGHT[self.ctrlmode_right]
 
         # always in use
-        cmd_x = 1 * self.left_stick[1]
+        # cmd_x = 1 * self.left_stick[1]
         cmd_yaw = -1 * self.right_stick[0]
 
         # default values
@@ -191,30 +191,35 @@ class StateEstimator:
 
         # gait buttons
         if self.mode == 0:
-            self.cmd_phase = 0.5
-            self.cmd_offset = 0.0
-            self.cmd_bound = 0.0
-            self.cmd_duration = 0.5
+            # self.cmd_phase = 0.5
+            # self.cmd_offset = 0.0
+            # self.cmd_bound = 0.0
+            # self.cmd_duration = 0.5
+            cmd_x = 0.0
         elif self.mode == 1:
-            self.cmd_phase = 0.0
-            self.cmd_offset = 0.0
-            self.cmd_bound = 0.0
-            self.cmd_duration = 0.5
+            # self.cmd_phase = 0.0
+            # self.cmd_offset = 0.0
+            # self.cmd_bound = 0.0
+            # self.cmd_duration = 0.5
+            cmd_x = 0.5
         elif self.mode == 2:
-            self.cmd_phase = 0.0
-            self.cmd_offset = 0.5
-            self.cmd_bound = 0.0
-            self.cmd_duration = 0.5
+            # self.cmd_phase = 0.0
+            # self.cmd_offset = 0.5
+            # self.cmd_bound = 0.0
+            # self.cmd_duration = 0.5
+            cmd_x = 1.0
         elif self.mode == 3:
-            self.cmd_phase = 0.0
-            self.cmd_offset = 0.0
-            self.cmd_bound = 0.5
-            self.cmd_duration = 0.5
+            # self.cmd_phase = 0.0
+            # self.cmd_offset = 0.0
+            # self.cmd_bound = 0.5
+            # self.cmd_duration = 0.5
+            cmd_x = 1.5
         else:
-            self.cmd_phase = 0.5
-            self.cmd_offset = 0.0
-            self.cmd_bound = 0.0
-            self.cmd_duration = 0.5
+            # self.cmd_phase = 0.5
+            # self.cmd_offset = 0.0
+            # self.cmd_bound = 0.0
+            # self.cmd_duration = 0.5
+            cmd_x = 0.0
 
         return np.array([cmd_x, cmd_y, cmd_yaw, cmd_height, cmd_freq, self.cmd_phase, self.cmd_offset, self.cmd_bound,
                          self.cmd_duration, cmd_footswing, cmd_ori_pitch, cmd_ori_roll, cmd_stance_width,
