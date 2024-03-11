@@ -141,6 +141,15 @@ class DeploymentRunner:
         try:
             for i in range(max_steps):
 
+                if self.command_profile.state_estimator.forward_triggered:
+                    message = f"At step {i}: nominal velocity {self.command_profile.state_estimator.nominal_vel:.1f}, forward command triggered."
+                elif self.command_profile.state_estimator.backward_triggered:
+                    message = f"At step {i}: nominal velocity {self.command_profile.state_estimator.nominal_vel:.1f}, backward command triggered."
+                else:
+                    message = f"At step {i}: nominal velocity {self.command_profile.state_estimator.nominal_vel:.1f}, standing still."
+
+                print(message)
+
                 policy_info = {}
                 action = self.policy(control_obs, policy_info)
 
@@ -167,18 +176,22 @@ class DeploymentRunner:
 
                 if self.command_profile.state_estimator.left_lower_left_switch_pressed:
                     if not self.is_currently_probing:
-                        print("START LOGGING")
+                        for _ in range(500):
+                            print(f"At step {i}: START LOGGING")
                         self.is_currently_probing = True
                         self.agents[self.control_agent_name].set_probing(True)
                         self.init_log_filename()
                         self.logger.reset()
                     else:
-                        print("SAVE LOG")
+                        for _ in range(500):
+                            print(f"At step {i}: SAVE LOG")
                         self.is_currently_probing = False
                         self.agents[self.control_agent_name].set_probing(False)
                         # calibrate, log, and then resume control
                         control_obs = self.calibrate(wait=False)
                         self.logger.save(self.log_filename)
+                        for _ in range(500):
+                            print(f"At step {i}: Log Saved Successfully")
                         self.init_log_filename()
                         self.logger.reset()
                         time.sleep(1)

@@ -126,6 +126,11 @@ class StateEstimator:
         self.body_loc = np.array([0, 0, 0])
         self.body_quat = np.array([0, 0, 0, 1])
 
+        # Customized to our policy.
+        self.nominal_vel = 1.0
+        self.forward_triggered = False
+        self.backward_triggered = False
+
     def get_body_linear_vel(self):
         self.body_lin_vel = np.dot(self.R.T, self.world_lin_vel)
         return self.body_lin_vel
@@ -161,6 +166,26 @@ class StateEstimator:
 
         # always in use
         # cmd_x = 1 * self.left_stick[1]
+        if self.left_stick[1] >= 1.0:
+            self.forward_triggered = True
+            self.backward_triggered = False
+        elif self.left_stick[1] <= -1.0:
+            self.forward_triggered = False
+            self.backward_triggered = True
+        else:
+            self.forward_triggered = False
+            self.backward_triggered = False
+        
+        if self.forward_triggered:
+            cmd_x = self.nominal_vel
+        elif self.backward_triggered:
+            cmd_x = -self.nominal_vel
+        else:
+            cmd_x = 0.0
+        
+        # Notice that your command will be scaled to 3.5 times larger in command profile.
+        # Thus, do a pre_scaling here.
+        cmd_x = cmd_x / 3.5
         cmd_yaw = -1 * self.right_stick[0]
 
         # default values
@@ -191,35 +216,35 @@ class StateEstimator:
 
         # gait buttons
         if self.mode == 0:
-            # self.cmd_phase = 0.5
-            # self.cmd_offset = 0.0
-            # self.cmd_bound = 0.0
-            # self.cmd_duration = 0.5
-            cmd_x = 0.0
+            self.cmd_phase = 0.5
+            self.cmd_offset = 0.0
+            self.cmd_bound = 0.0
+            self.cmd_duration = 0.5
+            self.nominal_vel = 0.5
         elif self.mode == 1:
-            # self.cmd_phase = 0.0
-            # self.cmd_offset = 0.0
-            # self.cmd_bound = 0.0
-            # self.cmd_duration = 0.5
-            cmd_x = 0.5
+            self.cmd_phase = 0.0
+            self.cmd_offset = 0.0
+            self.cmd_bound = 0.0
+            self.cmd_duration = 0.5
+            self.nominal_vel = 1.0
         elif self.mode == 2:
-            # self.cmd_phase = 0.0
-            # self.cmd_offset = 0.5
-            # self.cmd_bound = 0.0
-            # self.cmd_duration = 0.5
-            cmd_x = 1.0
+            self.cmd_phase = 0.0
+            self.cmd_offset = 0.5
+            self.cmd_bound = 0.0
+            self.cmd_duration = 0.5
+            self.nominal_vel = 1.5
         elif self.mode == 3:
-            # self.cmd_phase = 0.0
-            # self.cmd_offset = 0.0
-            # self.cmd_bound = 0.5
-            # self.cmd_duration = 0.5
-            cmd_x = 1.5
+            self.cmd_phase = 0.0
+            self.cmd_offset = 0.0
+            self.cmd_bound = 0.5
+            self.cmd_duration = 0.5
+            self.nominal_vel = 2.0
         else:
-            # self.cmd_phase = 0.5
-            # self.cmd_offset = 0.0
-            # self.cmd_bound = 0.0
-            # self.cmd_duration = 0.5
-            cmd_x = 0.0
+            self.cmd_phase = 0.5
+            self.cmd_offset = 0.0
+            self.cmd_bound = 0.0
+            self.cmd_duration = 0.5
+            self.nominal_vel = 1.0
 
         return np.array([cmd_x, cmd_y, cmd_yaw, cmd_height, cmd_freq, self.cmd_phase, self.cmd_offset, self.cmd_bound,
                          self.cmd_duration, cmd_footswing, cmd_ori_pitch, cmd_ori_roll, cmd_stance_width,
