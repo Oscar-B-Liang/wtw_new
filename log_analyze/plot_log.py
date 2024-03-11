@@ -55,25 +55,58 @@ def plot_yaw_commands(log_dir_path: str, logged_data: dict):
 
 
 def plot_contact_states(log_dir_path: str, logged_data: dict):
-    cmd_plot_path = os.path.join(log_dir_path, "gait.png")
+    gait_plot_path = os.path.join(log_dir_path, "gait.png")
 
-    feet_touch = []
+    contacts = []
     time_stamps = []
-    start_time = logged_data['hardware_closed_loop'][1][0]['time']
-    end_time = logged_data['hardware_closed_loop'][1][-1]['time']
     for data_point in logged_data['hardware_closed_loop'][1]:
-        feet_touch.append(data_point['contact_state'][0])
+        contacts.append(data_point['contact_state'][0])
         time_stamps.append(data_point['time'])
-    feet_touch = np.array(feet_touch)
-    middle_idx = int(len(time_stamps) / 2.0)
+    contacts = np.array(contacts)
 
-    fig, ax = plt.subplots(4, 1, sharex=True)
-    for i in range(4):
-        ax[i].plot(time_stamps[middle_idx - 50: middle_idx + 50], feet_touch[middle_idx - 50: middle_idx + 50, i])
-        # ax[i].set_xlim(start_time, end_time)
-    ax[0].set_title(f"Gait Plot (Time Duration {end_time - start_time:.2f} s)")
-    ax[3].set_xlabel("Time (s)")
-    plt.savefig(cmd_plot_path)
+    middle_idx = int(len(time_stamps) / 2)
+    contacts = contacts[middle_idx - 50: middle_idx + 50]
+    time_stamps = time_stamps[middle_idx - 50: middle_idx + 50]
+    
+    contact_gaps = []
+    for i in range(contacts.shape[1]):
+        this_contact_ranges = []
+        this_contact_steps = []
+        for j in range(contacts.shape[0]):
+            if contacts[j, i]:
+                this_contact_steps.append(j)
+                if j == contacts.shape[0] - 1:
+                    this_contact_ranges.append([this_contact_steps[0], this_contact_steps[-1]])
+                    this_contact_steps = []
+            elif len(this_contact_steps) != 0:
+                this_contact_ranges.append([this_contact_steps[0], this_contact_steps[-1]])
+                this_contact_steps = []
+        contact_gaps.append(this_contact_ranges)
+    
+    contact_gaps_times = []
+    for i in range(contacts.shape[1]):
+        this_contact_gap_times = []
+        for j in range(len(contact_gaps[i])):
+            this_contact_gap_times.append([time_stamps[contact_gaps[i][j][0]], time_stamps[contact_gaps[i][j][1]]])
+        contact_gaps_times.append(this_contact_gap_times)
+
+    fig, axs = plt.subplots(1, 1)
+    fig.set_size_inches(16, 6)
+    color_code = ['r', 'y', 'b', 'g']
+    feet_names = ['RR', 'RL', 'FR', 'FL']
+    for i in range(contacts.shape[1]):
+        axs.add_patch(plt.Rectangle((time_stamps[0], i - 0.2), time_stamps[-1] - time_stamps[0], 0.4, edgecolor='none', facecolor=color_code[i], alpha=0.1))
+        for j in range(len(contact_gaps_times[i])):
+            axs.add_patch(plt.Rectangle((contact_gaps_times[i][j][0], i - 0.2), contact_gaps_times[i][j][1] - contact_gaps_times[i][j][0], 0.4, edgecolor='none', facecolor=color_code[i]))
+    axs.set_xlim([time_stamps[0], time_stamps[-1]])
+    axs.set_ylim([-0.5, 3.5])
+    axs.set_xlabel("Running time (seconds)", weight='bold')
+    axs.set_ylabel("Foot name", weight='bold')
+    axs.set_yticks(range(len(feet_names)), feet_names)
+    axs.set_title("Gait Graph", weight='bold')
+
+    fig.tight_layout()
+    fig.savefig(gait_plot_path, dpi=100)
     plt.close()
 
 
