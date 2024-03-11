@@ -65,10 +65,11 @@ def plot_contact_states(log_dir_path: str, logged_data: dict):
         feet_touch.append(data_point['contact_state'][0])
         time_stamps.append(data_point['time'])
     feet_touch = np.array(feet_touch)
+    middle_idx = int(len(time_stamps) / 2.0)
 
     fig, ax = plt.subplots(4, 1, sharex=True)
     for i in range(4):
-        ax[i].plot(time_stamps[500: 600], feet_touch[500: 600, i])
+        ax[i].plot(time_stamps[middle_idx - 50: middle_idx + 50], feet_touch[middle_idx - 50: middle_idx + 50, i])
         # ax[i].set_xlim(start_time, end_time)
     ax[0].set_title(f"Gait Plot (Time Duration {end_time - start_time:.2f} s)")
     ax[3].set_xlabel("Time (s)")
