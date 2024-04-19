@@ -12,7 +12,7 @@ def train_schedule(gpu_list):
     # First layer for loop: alpha value.
     for seed in [7, 31, 42, 60]:
         BASH_COMMAND_LIST.append(
-            f"python train_wtw_w_energy_adaptive.py --headless --train_speed 2.5 --seed {seed}"
+            f"python train_wtw_w_energy_adaptive_deployable.py --headless --train_speed 2.5 --seed {seed}"
         )
 
     dispatch_thread = DispatchThread(

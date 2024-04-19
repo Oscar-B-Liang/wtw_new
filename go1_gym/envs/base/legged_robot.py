@@ -1769,6 +1769,12 @@ class LeggedRobot(BaseTask):
             temp_path: The path for saving the captured frame.
         """
         if self.enable_camera_sensor:
+            # Update camera position to follow the robot.
+            camera_target = self.base_pos[env_id].clone()
+            camera_position = self.base_pos[env_id].clone() + torch.tensor(self.cfg.viewer.cam_offset, requires_grad=False, device=self.sim_device)
+            camera_position = gymapi.Vec3(*camera_position)
+            camera_target = gymapi.Vec3(*camera_target)
+            self.gym.set_camera_location(self.camera_handles[env_id], self.envs[env_id], camera_position, camera_target)
             self.gym.write_camera_image_to_file(self.sim, self.envs[env_id], self.camera_handles[env_id], gymapi.IMAGE_COLOR, temp_path)
         else:
             print("Camera sensor is not enabled, so cameras are not added to the environments.")

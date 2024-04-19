@@ -87,6 +87,8 @@ def load_env(logdir, headless=False):
     Cfg.domain_rand.randomize_lag_timesteps = True
     Cfg.control.control_type = "actuator_net"
 
+    Cfg.viewer.cam_offset = [1.0, 2.0, 0.6]
+
     # Do camera recording in play:
     Cfg.viewer.cam_env_ids = [0]
     enable_camera_viewer = False
