@@ -15,7 +15,24 @@ class VelocityTrackingEasyEnv(LeggedRobot):
             cfg.env.num_envs = num_envs
 
         sim_params = gymapi.SimParams()
-        gymutil.parse_sim_config(vars(cfg.sim), sim_params)
+        # gymutil.parse_sim_config(vars(cfg.sim), sim_params)
+        sim_params.dt = cfg.sim.dt
+        sim_params.substeps = cfg.sim.substeps
+        sim_params.gravity = gymapi.Vec3(cfg.sim.gravity[0], cfg.sim.gravity[1], cfg.sim.gravity[2])
+        sim_params.up_axis = gymapi.UpAxis(cfg.sim.up_axis)
+        sim_params.use_gpu_pipeline = cfg.sim.use_gpu_pipeline
+        sim_params.physx.num_threads = cfg.sim.physx.num_threads
+        sim_params.physx.solver_type = cfg.sim.physx.solver_type
+        sim_params.physx.num_position_iterations = cfg.sim.physx.num_position_iterations
+        sim_params.physx.num_velocity_iterations = cfg.sim.physx.num_velocity_iterations
+        sim_params.physx.contact_offset = cfg.sim.physx.contact_offset
+        sim_params.physx.rest_offset = cfg.sim.physx.rest_offset
+        sim_params.physx.bounce_threshold_velocity = cfg.sim.physx.bounce_threshold_velocity
+        sim_params.physx.max_depenetration_velocity = cfg.sim.physx.max_depenetration_velocity
+        sim_params.physx.max_gpu_contact_pairs = cfg.sim.physx.max_gpu_contact_pairs
+        sim_params.physx.default_buffer_size_multiplier = cfg.sim.physx.default_buffer_size_multiplier
+        sim_params.physx.contact_collection = gymapi.ContactCollection(cfg.sim.physx.contact_collection)
+
         super().__init__(cfg, sim_params, physics_engine, sim_device, headless, temp_cap_dir, eval_cfg, enable_camera_sensor, initial_dynamics_dict)
 
 

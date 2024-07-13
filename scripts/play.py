@@ -8,8 +8,10 @@ import numpy as np
 import pickle as pkl
 
 from go1_gym import MINI_GYM_ROOT_DIR
+from go1_gym.envs.go1.go1_config_adaptive import AdaptiveGo1Config
 from go1_gym.envs.base.legged_robot_config import Cfg
 from go1_gym.envs.go1.velocity_tracking import VelocityTrackingEasyEnv
+from go1_gym.utils.helpers import dict_to_env_cfg
 from go1_gym.utils.logger import Logger
 
 from tqdm import tqdm
@@ -44,60 +46,57 @@ def load_env(logdir, headless=False):
     print("Loading from directory ", logdir)
 
     with open(logdir + "/parameters.pkl", 'rb') as file:
-        # pkl_cfg = pkl.load(file)
         pkl_cfg = Local_Unpickler(file).load()
-        print(pkl_cfg.keys())
-        cfg = pkl_cfg["Cfg"]
-        print(cfg.keys())
+        cfg = AdaptiveGo1Config()
+        cfg: Cfg = dict_to_env_cfg(pkl_cfg["Cfg"], cfg)
 
-        for key, value in cfg.items():
-            if hasattr(Cfg, key):
-                for key2, value2 in cfg[key].items():
-                    setattr(getattr(Cfg, key), key2, value2)
+        # for key, value in cfg.items():
+        #     if hasattr(Cfg, key):
+        #         for key2, value2 in cfg[key].items():
+        #             setattr(getattr(Cfg, key), key2, value2)
 
     # turn off DR for evaluation script
-    Cfg.domain_rand.push_robots = False
-    Cfg.domain_rand.randomize_friction = False
-    Cfg.domain_rand.randomize_gravity = False
-    Cfg.domain_rand.randomize_restitution = False
-    Cfg.domain_rand.randomize_motor_offset = False
-    Cfg.domain_rand.randomize_motor_strength = False
-    Cfg.domain_rand.randomize_friction_indep = False
-    Cfg.domain_rand.randomize_ground_friction = False
-    Cfg.domain_rand.randomize_base_mass = False
-    Cfg.domain_rand.randomize_Kd_factor = False
-    Cfg.domain_rand.randomize_Kp_factor = False
-    Cfg.domain_rand.randomize_joint_friction = False
-    Cfg.domain_rand.randomize_com_displacement = False
+    cfg.domain_rand.push_robots = False
+    cfg.domain_rand.randomize_friction = False
+    cfg.domain_rand.randomize_gravity = False
+    cfg.domain_rand.randomize_restitution = False
+    cfg.domain_rand.randomize_motor_offset = False
+    cfg.domain_rand.randomize_motor_strength = False
+    cfg.domain_rand.randomize_friction_indep = False
+    cfg.domain_rand.randomize_ground_friction = False
+    cfg.domain_rand.randomize_base_mass = False
+    cfg.domain_rand.randomize_Kd_factor = False
+    cfg.domain_rand.randomize_Kp_factor = False
+    cfg.domain_rand.randomize_joint_friction = False
+    cfg.domain_rand.randomize_com_displacement = False
 
     # Cfg.env.commands_mask = "zero_out"
     # Cfg.reward_scales.energy_sigma = 500
 
-    Cfg.env.num_recording_envs = 1
-    Cfg.env.num_envs = 1
+    cfg.env.num_recording_envs = 1
+    cfg.env.num_envs = 1
 
-    Cfg.terrain.num_rows = 5
-    Cfg.terrain.num_cols = 5
-    Cfg.terrain.border_size = 0
-    Cfg.terrain.center_robots = True
-    Cfg.terrain.center_span = 1
-    Cfg.terrain.teleport_robots = True
+    cfg.terrain.num_rows = 5
+    cfg.terrain.num_cols = 5
+    cfg.terrain.border_size = 0
+    cfg.terrain.center_robots = True
+    cfg.terrain.center_span = 1
+    cfg.terrain.teleport_robots = True
 
-    Cfg.domain_rand.lag_timesteps = 6
-    Cfg.domain_rand.randomize_lag_timesteps = True
-    Cfg.control.control_type = "actuator_net"
+    cfg.domain_rand.lag_timesteps = 6
+    cfg.domain_rand.randomize_lag_timesteps = True
+    cfg.control.control_type = "actuator_net"
 
-    Cfg.viewer.cam_offset = [1.0, 2.0, 0.6]
+    cfg.viewer.cam_offset = [1.0, 2.0, 0.6]
 
     # Do camera recording in play:
-    Cfg.viewer.cam_env_ids = [0]
-    enable_camera_viewer = False
+    cfg.viewer.cam_env_ids = [0]
     temp_cap_dir = os.path.join(MINI_GYM_ROOT_DIR, logdir, "temp_cap_dir")
     os.makedirs(temp_cap_dir, exist_ok=True)
 
     from go1_gym.envs.wrappers.history_wrapper import HistoryWrapper
 
-    env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=headless, cfg=Cfg, enable_camera_sensor=True, temp_cap_dir=temp_cap_dir)
+    env = VelocityTrackingEasyEnv(sim_device='cuda:0', headless=headless, cfg=cfg, enable_camera_sensor=True, temp_cap_dir=temp_cap_dir)
     env = HistoryWrapper(env)
 
     # load policy
@@ -150,19 +149,14 @@ def play_go1(model_dir, test_speed, headless=True):
         env.commands[:, 0] = x_vel_cmd
         env.commands[:, 1] = y_vel_cmd
         env.commands[:, 2] = yaw_vel_cmd
-        if env.cfg.env.commands_mask == "zero_out":
-            env.commands[:, 3] = body_height_cmd
-            env.commands[:, 4] = step_frequency_cmd
-            env.commands[:, 5:8] = gait
-            env.commands[:, 8] = 0.0
-            env.commands[:, 9] = footswing_height_cmd
-            env.commands[:, 10] = pitch_cmd
-            env.commands[:, 11] = roll_cmd
-            env.commands[:, 12] = stance_width_cmd
-        elif env.cfg.env.commands_mask == "del":
-            env.commands = env.commands[:, :3]
-        else:
-            raise ValueError(f"The commands mask {env.cfg.env.commands_mask} is invalid.")
+        env.commands[:, 3] = body_height_cmd
+        env.commands[:, 4] = step_frequency_cmd
+        env.commands[:, 5:8] = gait
+        env.commands[:, 8] = 0.0
+        env.commands[:, 9] = footswing_height_cmd
+        env.commands[:, 10] = pitch_cmd
+        env.commands[:, 11] = roll_cmd
+        env.commands[:, 12] = stance_width_cmd
         obs, rew, done, info = env.step(actions)
 
         if i >= 100 and i <= 400:

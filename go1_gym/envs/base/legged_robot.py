@@ -14,7 +14,8 @@ from go1_gym import MINI_GYM_ROOT_DIR
 from go1_gym.envs.base.base_task import BaseTask
 from go1_gym.utils.math_utils import quat_apply_yaw, wrap_to_pi, get_scale_shift
 from go1_gym.utils.terrain import Terrain
-from .legged_robot_config import Cfg
+from go1_gym.utils.helpers import class_to_dict
+from go1_gym.envs.base.legged_robot_config import Cfg
 
 
 class LeggedRobot(BaseTask):
@@ -147,13 +148,11 @@ class LeggedRobot(BaseTask):
     def check_termination(self):
         """ Check if environments need to be reset
         """
-        self.reset_buf = torch.any(torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1) > 1.,
-                                   dim=1)
+        self.reset_buf = torch.any(torch.norm(self.contact_forces[:, self.termination_contact_indices, :], dim=-1) > 1., dim=1)
         self.time_out_buf = self.episode_length_buf > self.cfg.env.max_episode_length  # no terminal reward for time-outs
         self.reset_buf |= self.time_out_buf
         if self.cfg.rewards.use_terminal_body_height:
-            self.body_height_buf = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1) \
-                                   < self.cfg.rewards.terminal_body_height
+            self.body_height_buf = torch.mean(self.root_states[:, 2].unsqueeze(1) - self.measured_heights, dim=1) < self.cfg.rewards.terminal_body_height
             self.reset_buf = torch.logical_or(self.body_height_buf, self.reset_buf)
 
     def reset_idx(self, env_ids):
@@ -191,8 +190,7 @@ class LeggedRobot(BaseTask):
         if len(train_env_ids) > 0:
             self.extras["train/episode"] = {}
             for key in self.episode_sums.keys():
-                self.extras["train/episode"]['rew_' + key] = torch.mean(
-                    self.episode_sums[key][train_env_ids])
+                self.extras["train/episode"]['rew_' + key] = torch.mean(self.episode_sums[key][train_env_ids])
                 self.episode_sums[key][train_env_ids] = 0.
         eval_env_ids = env_ids[env_ids >= self.num_train_envs]
         if len(eval_env_ids) > 0:
@@ -391,11 +389,8 @@ class LeggedRobot(BaseTask):
             self.obs_buf += (2 * torch.rand_like(self.obs_buf) - 1) * self.noise_scale_vec
         
         # Zero out unnecessary observation buffers.
-        if self.cfg.env.commands_mask == "zero_out":
-            self.obs_buf[:, 6: 18] = 0
-            self.obs_buf[:, 66: 70] = 0
-        elif self.cfg.env.commands_mask == "del":
-            self.obs_buf = torch.hstack([self.obs_buf[:, :6], self.obs_buf[:, 18:]])
+        self.obs_buf[:, 6: 18] = 0
+        self.obs_buf[:, 66: 70] = 0
 
         # build privileged obs
 
@@ -1070,7 +1065,7 @@ class LeggedRobot(BaseTask):
         """
         # noise_vec = torch.zeros_like(self.obs_buf[0])
         self.add_noise = self.cfg.noise.add_noise
-        noise_scales = self.cfg.noise_scales
+        noise_scales = self.cfg.noise.noise_scales
         noise_level = self.cfg.noise.noise_level
         noise_vec = torch.cat((torch.ones(3) * noise_scales.gravity * noise_level,
                                torch.ones(
@@ -1426,14 +1421,14 @@ class LeggedRobot(BaseTask):
         # reward episode sums
         self.episode_sums = {
             name: torch.zeros(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
-            for name in self.reward_scales.keys()}
-        self.episode_sums["total"] = torch.zeros(self.num_envs, dtype=torch.float, device=self.device,
-                                                 requires_grad=False)
+            for name in self.reward_scales.keys()
+        }
+        self.episode_sums["total"] = torch.zeros(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
         self.episode_sums_eval = {
             name: -1 * torch.ones(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
-            for name in self.reward_scales.keys()}
-        self.episode_sums_eval["total"] = torch.zeros(self.num_envs, dtype=torch.float, device=self.device,
-                                                      requires_grad=False)
+            for name in self.reward_scales.keys()
+        }
+        self.episode_sums_eval["total"] = torch.zeros(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
         self.command_sums = {
             name: torch.zeros(self.num_envs, dtype=torch.float, device=self.device, requires_grad=False)
             for name in
@@ -1670,12 +1665,12 @@ class LeggedRobot(BaseTask):
             self.env_origins[env_ids, 1] = spacing * yy.flatten()[:len(env_ids)]
             self.env_origins[env_ids, 2] = 0.
 
-    def _parse_cfg(self, cfg):
+    def _parse_cfg(self, cfg: Cfg):
         self.dt = self.cfg.control.decimation * self.sim_params.dt
-        self.obs_scales = self.cfg.obs_scales
-        self.reward_scales = vars(self.cfg.reward_scales)
-        self.curriculum_thresholds = vars(self.cfg.curriculum_thresholds)
-        cfg.command_ranges = vars(cfg.commands)
+        self.obs_scales = self.cfg.normalization.obs_scales
+        self.reward_scales = class_to_dict(self.cfg.rewards.scales)
+        self.curriculum_thresholds = class_to_dict(self.cfg.curriculum_thresholds)
+        # cfg.command_ranges = vars(cfg.commands)
         if cfg.terrain.mesh_type not in ['heightfield', 'trimesh']:
             cfg.terrain.curriculum = False
         max_episode_length_s = cfg.env.episode_length_s
@@ -1685,8 +1680,7 @@ class LeggedRobot(BaseTask):
         cfg.domain_rand.push_interval = np.ceil(cfg.domain_rand.push_interval_s / self.dt)
         cfg.domain_rand.rand_interval = np.ceil(cfg.domain_rand.rand_interval_s / self.dt)
         cfg.domain_rand.gravity_rand_interval = np.ceil(cfg.domain_rand.gravity_rand_interval_s / self.dt)
-        cfg.domain_rand.gravity_rand_duration = np.ceil(
-            cfg.domain_rand.gravity_rand_interval * cfg.domain_rand.gravity_impulse_duration)
+        cfg.domain_rand.gravity_rand_duration = np.ceil(cfg.domain_rand.gravity_rand_interval * cfg.domain_rand.gravity_impulse_duration)
 
     def _draw_debug_vis(self):
         """ Draws visualizations for dubugging (slows down simulation a lot).

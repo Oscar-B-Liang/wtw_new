@@ -5,6 +5,7 @@ from isaacgym.torch_utils import *
 from isaacgym import gymapi
 
 class CoRLRewards:
+
     def __init__(self, env):
         self.env = env
 
@@ -205,13 +206,13 @@ class CoRLRewards:
         # Reward less energy consumption.
         # The torque here is the actuation command torque applied to the joints.
         energy_consume = torch.sum(torch.abs(self.env.dof_vel * self.env.torques), dim=1)
-        return torch.exp(-energy_consume / self.env.cfg.reward_scales.energy_sigma)
+        return torch.exp(-energy_consume / self.env.cfg.rewards.energy_sigma)
 
     def _reward_energy_legs(self):
         # Reward less energy consumption.
         # The torque here is the actuation command torque applied to the joints.
         max_leg_energy_consume = torch.abs(self.env.dof_vel * self.env.torques).reshape(-1, 4, 3).sum(dim=2).max(dim=1).values
-        return torch.exp(-max_leg_energy_consume / self.env.cfg.reward_scales.energy_legs_sigma)
+        return torch.exp(-max_leg_energy_consume / self.env.cfg.rewards.energy_legs_sigma)
     
     def _reward_tracking_lin_vel_dep(self):
         # Tracking of linear velocity commands (xy axes)
@@ -222,5 +223,5 @@ class CoRLRewards:
     def _reward_energy_dep(self):
         weights = self.env.get_energy_alpha(self.env.commands[:, 0])
         energy_consumes = torch.sum(torch.abs(self.env.dof_vel * self.env.torques), dim=1)
-        return weights * torch.exp(-energy_consumes / self.env.cfg.reward_scales.energy_sigma)
+        return weights * torch.exp(-energy_consumes / self.env.cfg.rewards.energy_sigma)
     
