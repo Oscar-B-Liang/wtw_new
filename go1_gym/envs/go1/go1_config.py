@@ -59,11 +59,6 @@ class Go1Config(Cfg):
         only_positive_rewards_ji22_style = True
         sigma_rew_neg = 0.02
 
-        alpha_normalize = False
-        alpha_check_speeds = [-2.5, -2.0, -1.5, -1.0, -0.5, 0.5, 1.0, 1.5, 2.0, 2.5]
-        alpha_check_values = [0.7, 0.9, 0.9, 1.1, 1.3, 1.3, 1.1, 0.9, 0.9, 0.7]
-        alpha_check_scales = [0.72, 0.81, 1.00, 1.18, 1.45, 1.45, 1.18, 1.00, 0.81, 0.72]
-
         class scales(Cfg.rewards.scales):
             torques = -0.0001
             action_rate = -0.01

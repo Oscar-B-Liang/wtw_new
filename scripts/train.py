@@ -8,27 +8,40 @@ import random
 
 from go1_gym import MINI_GYM_ROOT_DIR
 from go1_gym.envs.base.legged_robot_config import Cfg
+from go1_gym.envs.go1.go1_config import Go1Config
 from go1_gym.envs.go1.go1_config_adaptive import AdaptiveGo1Config
 from go1_gym.envs.go1.velocity_tracking import VelocityTrackingEasyEnv
+from go1_gym.envs.wrappers.history_wrapper import HistoryWrapper
+from go1_gym.utils.helpers import class_to_dict
 
 from ml_logger import logger
 
 from go1_gym_learn.ppo_cse import Runner
-from go1_gym.envs.wrappers.history_wrapper import HistoryWrapper
 from go1_gym_learn.ppo_cse.actor_critic import AC_Args
 from go1_gym_learn.ppo_cse.ppo import PPO_Args
 from go1_gym_learn.ppo_cse import RunnerArgs
 
 from pathlib import Path
+import yaml
 
 
-def train_go1(args):
+def train_go1(args, logdir):
+    
+    cfg_mapping = {
+        "original": Go1Config,
+        "adaptive_en": AdaptiveGo1Config
+    }
 
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     random.seed(args.seed)
 
-    cfg = AdaptiveGo1Config()
+    cfg: Cfg = cfg_mapping[args.cfg]()
+    cfg.rewards.scales.energy_dep = args.en_dep
+    env_dict = class_to_dict(cfg)
+    with open(f"{logdir}/env_cfg.yaml", "w") as file:
+        yaml.dump(env_dict, file)
+    file.close()
 
     if args.train_speed is not None:
         cfg.commands.lin_vel_x = [-min(args.train_speed + 0.1, 1.0), min(args.train_speed + 0.1, 1.0)]
@@ -57,17 +70,21 @@ if __name__ == '__main__':
     parser.add_argument('--device', default=0, type=int)
     parser.add_argument('--train_speed', default=None, type=float)
     parser.add_argument('--seed', default=0, type=int)
+    parser.add_argument('--cfg', default="adaptive_en", type=str)
+    parser.add_argument('--en_dep', default=1.0, type=float)
     args = parser.parse_args()
 
     stem = Path(__file__).stem
     if args.train_speed is None:
+        logdir = f"{MINI_GYM_ROOT_DIR}/checkpoints/{stem}/seed-{args.seed}-endep-{args.en_dep:.1f}"
         logger.configure(
-            logger.utcnow(f'{stem}/seed-{args.seed}'),
+            logger.utcnow(f'{stem}/seed-{args.seed}-endep-{args.en_dep:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     else:
+        logdir = f"{MINI_GYM_ROOT_DIR}/checkpoints/{stem}/seed-{args.seed}-endep-{args.en_dep:.1f}-speed-{args.train_speed:.1f}"
         logger.configure(
-            logger.utcnow(f'{stem}/seed-{args.seed}-speed-{args.train_speed:.1f}'),
+            logger.utcnow(f'{stem}/seed-{args.seed}-endep-{args.en_dep:.1f}-speed-{args.train_speed:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     logger.log_text(
@@ -103,4 +120,4 @@ if __name__ == '__main__':
     )
 
     # to see the environment rendering, set headless=False
-    train_go1(args=args)
+    train_go1(args=args, logdir=logdir)

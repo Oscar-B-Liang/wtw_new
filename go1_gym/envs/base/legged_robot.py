@@ -1789,13 +1789,16 @@ class LeggedRobot(BaseTask):
         self.recording_step = 0
     
     def get_energy_alpha(self, command_vels):
-        alpha_check_speeds = self.cfg.rewards.alpha_check_speeds
-        alpha_check_values = self.cfg.rewards.alpha_check_values
-        weights = np.interp(command_vels.cpu().numpy(), alpha_check_speeds, alpha_check_values)
-        return torch.tensor(weights, device=self.device)
+        m_alpha = self.cfg.rewards.m_alpha
+        b_alpha = self.cfg.rewards.b_alpha
+        command_vels_abs = torch.abs(command_vels)
+        return m_alpha / torch.where(command_vels_abs > 0.1, command_vels_abs, 0.1) + b_alpha
+        # weights = np.interp(command_vels.cpu().numpy(), alpha_check_speeds, alpha_check_values)
     
     def get_energy_top(self, command_vels):
-        alpha_check_speeds = self.cfg.rewards.alpha_check_speeds
-        alpha_check_scales = self.cfg.rewards.alpha_check_scales
-        weights = np.interp(command_vels.cpu().numpy(), alpha_check_speeds, alpha_check_scales)
-        return torch.tensor(weights, device=self.device)
+        m_Z = self.cfg.rewards.m_Z
+        b_Z = self.cfg.rewards.b_Z
+        command_vels_abs = torch.abs(command_vels)
+        return m_Z / torch.where(command_vels_abs > 0.1, command_vels_abs, 0.1) + b_Z
+        # weights = np.interp(command_vels.cpu().numpy(), alpha_check_speeds, alpha_check_scales)
+        # return torch.tensor(weights, device=self.device)

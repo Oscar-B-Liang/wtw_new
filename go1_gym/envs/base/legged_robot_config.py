@@ -304,9 +304,13 @@ class Cfg(BaseConfig):
         footswing_height = 0.09
 
         alpha_normalize = False
-        alpha_check_speeds = [-2.5, 2.5]
-        alpha_check_values = [0.7, 0.7]
-        alpha_check_scales = [0.72, 0.72]
+        m_alpha = 1.0
+        b_alpha = 0.0
+        m_Z = 0.4317
+        b_Z = 0.6377
+        # alpha_check_speeds = [-2.5, 2.5]
+        # alpha_check_values = [0.7, 0.7]
+        # alpha_check_scales = [0.72, 0.72]
 
         energy_sigma = 300.0
         energy_legs_sigma = 100.0
