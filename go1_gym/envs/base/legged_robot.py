@@ -1793,12 +1793,10 @@ class LeggedRobot(BaseTask):
         b_alpha = self.cfg.rewards.b_alpha
         command_vels_abs = torch.abs(command_vels)
         return m_alpha / torch.where(command_vels_abs > 0.1, command_vels_abs, 0.1) + b_alpha
-        # weights = np.interp(command_vels.cpu().numpy(), alpha_check_speeds, alpha_check_values)
     
     def get_energy_top(self, command_vels):
-        m_Z = self.cfg.rewards.m_Z
-        b_Z = self.cfg.rewards.b_Z
-        command_vels_abs = torch.abs(command_vels)
-        return m_Z / torch.where(command_vels_abs > 0.1, command_vels_abs, 0.1) + b_Z
-        # weights = np.interp(command_vels.cpu().numpy(), alpha_check_speeds, alpha_check_scales)
-        # return torch.tensor(weights, device=self.device)
+        # m_Z = self.cfg.rewards.m_Z
+        # b_Z = self.cfg.rewards.b_Z
+        # command_vels_abs = torch.abs(command_vels)
+        # return m_Z / torch.where(command_vels_abs > 0.1, command_vels_abs, 0.1) + b_Z
+        return self.get_energy_alpha(command_vels)
