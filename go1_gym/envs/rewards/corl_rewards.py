@@ -49,8 +49,7 @@ class CoRLRewards:
 
     def _reward_collision(self):
         # Penalize collisions on selected bodies
-        return torch.sum(1. * (torch.norm(self.env.contact_forces[:, self.env.penalised_contact_indices, :], dim=-1) > 0.1),
-                         dim=1)
+        return torch.sum(1. * (torch.norm(self.env.contact_forces[:, self.env.penalised_contact_indices, :], dim=-1) > 0.1), dim=1)
 
     def _reward_dof_pos_limits(self):
         # Penalize dof positions too close to the limit
@@ -71,8 +70,7 @@ class CoRLRewards:
 
         reward = 0
         for i in range(4):
-            reward += - (1 - desired_contact[:, i]) * (
-                        1 - torch.exp(-1 * foot_forces[:, i] ** 2 / self.env.cfg.rewards.gait_force_sigma))
+            reward += - (1 - desired_contact[:, i]) * (1 - torch.exp(-1 * foot_forces[:, i] ** 2 / self.env.cfg.rewards.gait_force_sigma))
         return reward / 4
 
     def _reward_tracking_contacts_shaped_vel(self):
@@ -80,8 +78,7 @@ class CoRLRewards:
         desired_contact = self.env.desired_contact_states
         reward = 0
         for i in range(4):
-            reward += - (desired_contact[:, i] * (
-                        1 - torch.exp(-1 * foot_velocities[:, i] ** 2 / self.env.cfg.rewards.gait_vel_sigma)))
+            reward += - (desired_contact[:, i] * (1 - torch.exp(-1 * foot_velocities[:, i] ** 2 / self.env.cfg.rewards.gait_vel_sigma)))
         return reward / 4
 
     def _reward_dof_pos(self):
@@ -122,8 +119,7 @@ class CoRLRewards:
 
     def _reward_feet_contact_forces(self):
         # penalize high contact forces
-        return torch.sum((torch.norm(self.env.contact_forces[:, self.env.feet_indices, :],
-                                     dim=-1) - self.env.cfg.rewards.max_contact_force).clip(min=0.), dim=1)
+        return torch.sum((torch.norm(self.env.contact_forces[:, self.env.feet_indices, :], dim=-1) - self.env.cfg.rewards.max_contact_force).clip(min=0.), dim=1)
 
     def _reward_feet_clearance_cmd_linear(self):
         phases = 1 - torch.abs(1.0 - torch.clip((self.env.foot_indices * 2.0) - 1.0, 0.0, 1.0) * 2.0)
@@ -135,24 +131,19 @@ class CoRLRewards:
     def _reward_feet_impact_vel(self):
         prev_foot_velocities = self.env.prev_foot_velocities[:, :, 2].view(self.env.num_envs, -1)
         contact_states = torch.norm(self.env.contact_forces[:, self.env.feet_indices, :], dim=-1) > 1.0
-
         rew_foot_impact_vel = contact_states * torch.square(torch.clip(prev_foot_velocities, -100, 0))
-
         return torch.sum(rew_foot_impact_vel, dim=1)
 
 
     def _reward_collision(self):
         # Penalize collisions on selected bodies
-        return torch.sum(1. * (torch.norm(self.env.contact_forces[:, self.env.penalised_contact_indices, :], dim=-1) > 0.1),
-                         dim=1)
+        return torch.sum(1. * (torch.norm(self.env.contact_forces[:, self.env.penalised_contact_indices, :], dim=-1) > 0.1), dim=1)
 
     def _reward_orientation_control(self):
         # Penalize non flat base orientation
         roll_pitch_commands = self.env.commands[:, 10:12]
-        quat_roll = quat_from_angle_axis(-roll_pitch_commands[:, 1],
-                                         torch.tensor([1, 0, 0], device=self.env.device, dtype=torch.float))
-        quat_pitch = quat_from_angle_axis(-roll_pitch_commands[:, 0],
-                                          torch.tensor([0, 1, 0], device=self.env.device, dtype=torch.float))
+        quat_roll = quat_from_angle_axis(-roll_pitch_commands[:, 1], torch.tensor([1, 0, 0], device=self.env.device, dtype=torch.float))
+        quat_pitch = quat_from_angle_axis(-roll_pitch_commands[:, 0], torch.tensor([0, 1, 0], device=self.env.device, dtype=torch.float))
 
         desired_base_quat = quat_mul(quat_roll, quat_pitch)
         desired_projected_gravity = quat_rotate_inverse(desired_base_quat, self.env.gravity_vec)
@@ -163,8 +154,7 @@ class CoRLRewards:
         cur_footsteps_translated = self.env.foot_positions - self.env.base_pos.unsqueeze(1)
         footsteps_in_body_frame = torch.zeros(self.env.num_envs, 4, 3, device=self.env.device)
         for i in range(4):
-            footsteps_in_body_frame[:, i, :] = quat_apply_yaw(quat_conjugate(self.env.base_quat),
-                                                              cur_footsteps_translated[:, i, :])
+            footsteps_in_body_frame[:, i, :] = quat_apply_yaw(quat_conjugate(self.env.base_quat), cur_footsteps_translated[:, i, :])
 
         # nominal positions: [FR, FL, RR, RL]
         if self.env.cfg.commands.num_commands >= 13:
@@ -213,12 +203,6 @@ class CoRLRewards:
         # The torque here is the actuation command torque applied to the joints.
         max_leg_energy_consume = torch.abs(self.env.dof_vel * self.env.torques).reshape(-1, 4, 3).sum(dim=2).max(dim=1).values
         return torch.exp(-max_leg_energy_consume / self.env.cfg.rewards.energy_legs_sigma)
-    
-    def _reward_tracking_lin_vel_dep(self):
-        # Tracking of linear velocity commands (xy axes)
-        # Adaptive to target velocity.
-        lin_vel_error = torch.sum(torch.square(self.env.commands[:, :2] - self.env.base_lin_vel[:, :2]), dim=1)
-        return torch.exp(-3.0 * lin_vel_error / (self.env.commands[:, 0] ** 2))
     
     def _reward_energy_dep(self):
         weights = self.env.get_energy_alpha(self.env.commands[:, 0])
