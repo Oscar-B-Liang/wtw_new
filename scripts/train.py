@@ -38,6 +38,8 @@ def train_go1(args, logdir):
 
     cfg: Cfg = cfg_mapping[args.cfg]()
     cfg.rewards.scales.energy_dep = args.en_dep
+    cfg.rewards.scales.energy_new_actual = args.en_new_actual
+    cfg.rewards.scales.energy_new_cmd = args.en_new_cmd
     env_dict = class_to_dict(cfg)
     with open(f"{logdir}/env_cfg.yaml", "w") as file:
         yaml.dump(env_dict, file)
@@ -71,20 +73,22 @@ if __name__ == '__main__':
     parser.add_argument('--train_speed', default=None, type=float)
     parser.add_argument('--seed', default=0, type=int)
     parser.add_argument('--cfg', default="adaptive_en", type=str)
-    parser.add_argument('--en_dep', default=1.0, type=float)
+    parser.add_argument('--en_dep', default=0.0, type=float)
+    parser.add_argument('--en_new_actual', default=0.0, type=float)
+    parser.add_argument('--en_new_cmd', default=0.0, type=float)
     args = parser.parse_args()
 
     stem = Path(__file__).stem
     if args.train_speed is None:
-        logdir = f"{MINI_GYM_ROOT_DIR}/checkpoints/{stem}/seed-{args.seed}-endep-{args.en_dep:.1f}"
+        logdir = f"{MINI_GYM_ROOT_DIR}/checkpoints/{stem}/seed-{args.seed}-ennewa-{args.en_new_actual:.1f}-ennewc-{args.en_new_cmd:.1f}"
         logger.configure(
-            logger.utcnow(f'{stem}/seed-{args.seed}-endep-{args.en_dep:.1f}'),
+            logger.utcnow(f'{stem}/seed-{args.seed}-ennewa-{args.en_new_actual:.1f}-ennewc-{args.en_new_cmd:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     else:
-        logdir = f"{MINI_GYM_ROOT_DIR}/checkpoints/{stem}/seed-{args.seed}-endep-{args.en_dep:.1f}-speed-{args.train_speed:.1f}"
+        logdir = f"{MINI_GYM_ROOT_DIR}/checkpoints/{stem}/seed-{args.seed}-ennewa-{args.en_new_actual:.1f}-ennewc-{args.en_new_cmd:.1f}-speed-{args.train_speed:.1f}"
         logger.configure(
-            logger.utcnow(f'{stem}/seed-{args.seed}-endep-{args.en_dep:.1f}-speed-{args.train_speed:.1f}'),
+            logger.utcnow(f'{stem}/seed-{args.seed}-ennewa-{args.en_new_actual:.1f}-ennewc-{args.en_new_cmd:.1f}-speed-{args.train_speed:.1f}'),
             root=Path(f"{MINI_GYM_ROOT_DIR}/checkpoints").resolve()
         )
     logger.log_text(

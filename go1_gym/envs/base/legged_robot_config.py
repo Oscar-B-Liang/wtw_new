@@ -313,7 +313,8 @@ class Cfg(BaseConfig):
         # alpha_check_scales = [0.72, 0.72]
 
         energy_sigma = 300.0
-        energy_legs_sigma = 100.0
+        energy_sigma_lin = 200.0
+        energy_sigma_ang = 100.0
 
         class scales:
             termination = -0.0
@@ -325,23 +326,15 @@ class Cfg(BaseConfig):
             torques = -0.00001
             dof_vel = -0.
             dof_acc = -2.5e-7
-            base_height = -0.
-            feet_air_time = 1.0
             collision = -1.
-            feet_stumble = -0.0
             action_rate = -0.01
-            stand_still = -0.
-            tracking_lin_vel_lat = 0.
-            tracking_lin_vel_long = 0.
-            tracking_contacts = 0.
-            tracking_contacts_shaped = 0.
             tracking_contacts_shaped_force = 0.
             tracking_contacts_shaped_vel = 0.
             jump = 0.0
             energy = 0.0
             energy_dep = 0.0
-            energy_expenditure = 0.0
-            survival = 0.0
+            energy_new_actual = 0.0
+            energy_new_cmd = 0.0
             dof_pos_limits = 0.0
             feet_contact_forces = 0.
             feet_slip = 0.
@@ -349,10 +342,8 @@ class Cfg(BaseConfig):
             dof_pos = 0.
             action_smoothness_1 = 0.
             action_smoothness_2 = 0.
-            base_motion = 0.
             feet_impact_vel = 0.0
             raibert_heuristic = 0.0
-            energy_legs = 0.0
 
     class normalization:
         clip_observations = 100.

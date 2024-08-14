@@ -105,7 +105,7 @@ def load_env(logdir, headless=False):
     return env, policy
 
 
-def play_go1(model_dir, test_speed, headless=True):
+def play_go1(model_dir, lin_x_speed, yaw_speed, headless=True):
 
     model_dir = f"{MINI_GYM_ROOT_DIR}/{model_dir}"
     env, policy = load_env(model_dir, headless=headless)
@@ -119,7 +119,7 @@ def play_go1(model_dir, test_speed, headless=True):
         "pacing": [0, 0, 0.5]
     }
 
-    x_vel_cmd, y_vel_cmd, yaw_vel_cmd = test_speed, 0.0, 0.0
+    x_vel_cmd, y_vel_cmd, yaw_vel_cmd = lin_x_speed, 0.0, yaw_speed
     # body_height_cmd = 0.0
     # step_frequency_cmd = 3.0
     # gait = torch.tensor(gaits["trotting"])
@@ -138,7 +138,7 @@ def play_go1(model_dir, test_speed, headless=True):
     measured_x_vels = np.zeros(num_eval_steps)
     joint_positions = np.zeros((num_eval_steps, 12))
 
-    logger = Logger(env.env.dt, env.env.dof_names, env.feet_names, test_speed, model_dir, 200)
+    logger = Logger(env.env.dt, env.env.dof_names, env.feet_names, lin_x_speed, yaw_speed, model_dir, 200)
     obs = env.reset()
 
     env.env.start_video_recording()
@@ -190,9 +190,9 @@ def play_go1(model_dir, test_speed, headless=True):
         measured_x_vels[i] = env.base_lin_vel[0, 0]
         joint_positions[i] = env.dof_pos[0, :].cpu()
     
-    logger.plot_save_states(f"{test_speed}", [0])
+    logger.plot_save_states(f"{lin_x_speed}_{yaw_speed}", [0])
 
-    video_save_paths = [os.path.join(model_dir, "analysis", f"{test_speed}_env_{i}.mp4") for i in env.env.cfg.viewer.cam_env_ids]
+    video_save_paths = [os.path.join(model_dir, "analysis", f"{lin_x_speed}_{yaw_speed}_env_{i}.mp4") for i in env.env.cfg.viewer.cam_env_ids]
     env.env.stop_video_recording(video_save_paths)
 
 
@@ -203,7 +203,8 @@ if __name__ == '__main__':
     parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--model_dir", type=str, default="checkpoints/train_min_cmd/2024-02-19-044826.014731")
     parser.add_argument("--headless", action="store_true")
-    parser.add_argument("--test_speed", type=float, default=1.0)
+    parser.add_argument("--lin_speed", type=float, default=2.0)
+    parser.add_argument("--ang_speed", type=float, default=0.0)
     args = parser.parse_args()
 
-    play_go1(model_dir=args.model_dir, test_speed=args.test_speed, headless=args.headless)
+    play_go1(model_dir=args.model_dir, lin_x_speed=args.lin_speed, yaw_speed=args.ang_speed, headless=args.headless)

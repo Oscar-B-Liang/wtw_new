@@ -9,13 +9,14 @@ import yaml
 
 class Logger:
 
-    def __init__(self, dt, dof_names, feet_names, test_speed, model_dir, load_iteration):
+    def __init__(self, dt, dof_names, feet_names, lin_speed, ang_speed, model_dir, load_iteration):
         self.state_log = defaultdict(list)
         self.dt = dt
         self.num_episodes = 0
         self.feet_names = feet_names
         self.dof_names = dof_names
-        self.test_speed = test_speed
+        self.lin_speed = lin_speed
+        self.ang_speed = ang_speed
         self.model_dir = model_dir
         self.load_iteration = load_iteration
 
@@ -418,7 +419,7 @@ class Logger:
         axs.set_xlabel("Running time (seconds)", weight='bold')
         axs.set_ylabel("Foot name", weight='bold')
         axs.set_yticks(range(len(self.feet_names)), self.feet_names)
-        axs.set_title("Gait Graph under Test Speed {:.3f} m/s".format(self.test_speed), weight='bold')
+        axs.set_title("Gait Graph under Test Speed {:.3f} m/s".format(self.lin_speed), weight='bold')
 
         fig.tight_layout()
         fig.savefig(os.path.join(self.model_dir, "analysis", f"{test_name}_env_{robot_index}_gait_plot_{self.load_iteration}.png"), dpi=100)
