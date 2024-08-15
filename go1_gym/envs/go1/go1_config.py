@@ -222,4 +222,3 @@ class Go1Config(Cfg):
         friction_range = [0, 1]
         ground_friction_range = [0, 1]
         clip_actions = 10.0
-      
