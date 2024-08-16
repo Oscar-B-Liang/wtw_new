@@ -4,7 +4,10 @@ from go1_gym.envs.go1.go1_config import Go1Config
 class AdaptiveGo1ConfigTerrain(Go1Config):
 
     class env(Go1Config.env):
-        num_observations = 257
+        # num_observations = 257
+        # observe_heights = True
+        num_observations = 70
+        observe_heights = False
 
     class rewards(Go1Config.rewards):
 
@@ -13,9 +16,6 @@ class AdaptiveGo1ConfigTerrain(Go1Config):
         b_alpha = 0.6791
         m_Z = 0.4317
         b_Z = 0.6377
-        # alpha_check_speeds = [-2.5, -2.0, -1.5, -1.0, -0.5, 0.5, 1.0, 1.5, 2.0, 2.5]
-        # alpha_check_values = [0.7, 0.9, 0.9, 1.1, 1.3, 1.3, 1.1, 0.9, 0.9, 0.7]
-        # alpha_check_scales = [0.72, 0.81, 1.00, 1.18, 1.45, 1.45, 1.18, 1.00, 0.81, 0.72]
 
         energy_sigma = 300.0
         energy_sigma_lin = 1000.0

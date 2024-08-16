@@ -391,7 +391,7 @@ class LeggedRobot(BaseTask):
         self.obs_buf[:, 66: 70] = 0
 
         # Add height measurement if terrain is added.
-        if self.cfg.terrain.measure_heights:
+        if self.cfg.env.observe_heights:
             heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.2 - self.measured_heights, -1, 1)
             self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
 

@@ -18,6 +18,7 @@ from go1_gym.utils.logger import Logger
 from tqdm import tqdm
 import os
 import io
+import yaml
 
 
 class Local_Unpickler(pkl.Unpickler):
@@ -46,10 +47,10 @@ def load_policy(logdir):
 def load_env(logdir, headless=False, terrain_choice="flat", terrain_diff=0.1):
     print("Loading from directory ", logdir)
 
-    with open(logdir + "/parameters.pkl", 'rb') as file:
-        pkl_cfg = Local_Unpickler(file).load()
+    with open(logdir + "/env_cfg.yaml", 'r') as file:
+        yaml_cfg = yaml.load(file, Loader=yaml.SafeLoader )
         cfg = AdaptiveGo1ConfigTerrain()
-        cfg: Cfg = dict_to_env_cfg(pkl_cfg["Cfg"], cfg)
+        cfg: Cfg = dict_to_env_cfg(cfg, yaml_cfg)
 
     # turn off DR for evaluation script
     cfg.domain_rand.push_robots = False

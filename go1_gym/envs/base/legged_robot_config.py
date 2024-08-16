@@ -28,6 +28,7 @@ class Cfg(BaseConfig):
         observe_clock_inputs = False
         observe_two_prev_actions = False
         observe_imu = False
+        observe_heights = False
         record_video = True
         recording_width_px = 360
         recording_height_px = 240
