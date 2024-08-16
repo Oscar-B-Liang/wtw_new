@@ -43,7 +43,7 @@ def load_policy(logdir):
     return policy
 
 
-def load_env(logdir, headless=False):
+def load_env(logdir, headless=False, terrain_choice="flat", terrain_diff=0.1):
     print("Loading from directory ", logdir)
 
     with open(logdir + "/parameters.pkl", 'rb') as file:
@@ -66,9 +66,22 @@ def load_env(logdir, headless=False):
     cfg.domain_rand.randomize_joint_friction = False
     cfg.domain_rand.randomize_com_displacement = False
 
-    # Disable terrain
-    # cfg.terrainterrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
-    # cfg.terrain.curriculum = False
+    # Choose Terrain
+    if terrain_choice == "sslope":
+        cfg.terrain.terrain_proportions = [1.0, 0.0, 0.0, 0.0, 0.0]
+    elif terrain_choice == "rslope":
+        cfg.terrain.terrain_proportions = [0.0, 1.0, 0.0, 0.0, 0.0]
+    elif terrain_choice == "sup":
+        cfg.terrain.terrain_proportions = [0.0, 0.0, 1.0, 0.0, 0.0]
+    elif terrain_choice == "sdown":
+        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 1.0, 0.0]
+    elif terrain_choice == "discrete":
+        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 0.0, 1.0]
+    else:
+        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 0.0, 0.0]
+    cfg.terrain.curriculum = False
+    cfg.terrain.selected = False
+    cfg.terrain.difficulty_scale = terrain_diff
 
     cfg.env.num_recording_envs = 1
     cfg.env.num_envs = 1
@@ -102,10 +115,10 @@ def load_env(logdir, headless=False):
     return env, policy
 
 
-def play_go1(model_dir, lin_x_speed, yaw_speed, headless=True):
+def play_go1(model_dir, lin_x_speed, yaw_speed, headless=True, terrain_choice="flat", terrain_diff=0.1):
 
     model_dir = f"{MINI_GYM_ROOT_DIR}/{model_dir}"
-    env, policy = load_env(model_dir, headless=headless)
+    env, policy = load_env(model_dir, headless=headless, terrain_choice=terrain_choice, terrain_diff=terrain_diff)
     os.makedirs(os.path.join(model_dir, "analysis"), exist_ok=True)
 
     num_eval_steps = 500
@@ -203,6 +216,7 @@ if __name__ == '__main__':
     parser.add_argument("--lin_speed", type=float, default=2.0)
     parser.add_argument("--ang_speed", type=float, default=0.0)
     parser.add_argument("--terrain_choice", type=str, default="flat")
+    parser.add_argument("--terrain_diff", type=float, default=0.1)
     args = parser.parse_args()
 
-    play_go1(model_dir=args.model_dir, lin_x_speed=args.lin_speed, yaw_speed=args.ang_speed, headless=args.headless)
+    play_go1(model_dir=args.model_dir, lin_x_speed=args.lin_speed, yaw_speed=args.ang_speed, headless=args.headless, terrain_choice=args.terrain_choice, terrain_diff=args.terrain_diff)
