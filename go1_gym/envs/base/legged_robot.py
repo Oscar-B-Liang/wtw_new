@@ -390,6 +390,11 @@ class LeggedRobot(BaseTask):
         self.obs_buf[:, 6: 18] = 0
         self.obs_buf[:, 66: 70] = 0
 
+        # Add height measurement if terrain is added.
+        if self.cfg.terrain.measure_heights:
+            heights = torch.clip(self.root_states[:, 2].unsqueeze(1) - 0.2 - self.measured_heights, -1, 1)
+            self.obs_buf = torch.cat((self.obs_buf, heights), dim=-1)
+
         # build privileged obs
 
         self.privileged_obs_buf = torch.empty(self.num_envs, 0).to(self.device)

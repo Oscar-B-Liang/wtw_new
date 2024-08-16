@@ -9,6 +9,7 @@ import pickle as pkl
 
 from go1_gym import MINI_GYM_ROOT_DIR
 from go1_gym.envs.go1.go1_config_adaptive import AdaptiveGo1Config
+from go1_gym.envs.go1.go1_config_adaptive_terrain import AdaptiveGo1ConfigTerrain
 from go1_gym.envs.base.legged_robot_config import Cfg
 from go1_gym.envs.go1.velocity_tracking import VelocityTrackingEasyEnv
 from go1_gym.utils.helpers import dict_to_env_cfg
@@ -47,13 +48,8 @@ def load_env(logdir, headless=False):
 
     with open(logdir + "/parameters.pkl", 'rb') as file:
         pkl_cfg = Local_Unpickler(file).load()
-        cfg = AdaptiveGo1Config()
+        cfg = AdaptiveGo1ConfigTerrain()
         cfg: Cfg = dict_to_env_cfg(pkl_cfg["Cfg"], cfg)
-
-        # for key, value in cfg.items():
-        #     if hasattr(Cfg, key):
-        #         for key2, value2 in cfg[key].items():
-        #             setattr(getattr(Cfg, key), key2, value2)
 
     # turn off DR for evaluation script
     cfg.domain_rand.push_robots = False
@@ -70,8 +66,9 @@ def load_env(logdir, headless=False):
     cfg.domain_rand.randomize_joint_friction = False
     cfg.domain_rand.randomize_com_displacement = False
 
-    # Cfg.env.commands_mask = "zero_out"
-    # Cfg.reward_scales.energy_sigma = 500
+    # Disable terrain
+    # cfg.terrainterrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
+    # cfg.terrain.curriculum = False
 
     cfg.env.num_recording_envs = 1
     cfg.env.num_envs = 1
@@ -205,6 +202,7 @@ if __name__ == '__main__':
     parser.add_argument("--headless", action="store_true")
     parser.add_argument("--lin_speed", type=float, default=2.0)
     parser.add_argument("--ang_speed", type=float, default=0.0)
+    parser.add_argument("--terrain_choice", type=str, default="flat")
     args = parser.parse_args()
 
     play_go1(model_dir=args.model_dir, lin_x_speed=args.lin_speed, yaw_speed=args.ang_speed, headless=args.headless)

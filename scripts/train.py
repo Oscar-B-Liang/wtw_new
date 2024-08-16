@@ -59,7 +59,7 @@ def train_go1(args, logdir):
     env = HistoryWrapper(env)
     gpu_id = args.device
     runner = Runner(env, device=f"cuda:{gpu_id}")
-    runner.learn(num_learning_iterations=2000, init_at_random_ep_len=True, eval_freq=100)
+    runner.learn(num_learning_iterations=5000, init_at_random_ep_len=True, eval_freq=100)
 
 
 if __name__ == '__main__':

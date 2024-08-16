@@ -3,6 +3,9 @@ from go1_gym.envs.go1.go1_config import Go1Config
 
 class AdaptiveGo1ConfigTerrain(Go1Config):
 
+    class env(Go1Config.env):
+        num_observations = 257
+
     class rewards(Go1Config.rewards):
 
         alpha_normalize = False
@@ -87,7 +90,7 @@ class AdaptiveGo1ConfigTerrain(Go1Config):
         terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
         # trimesh only:
         slope_treshold = 0.75  # slopes above this threshold will be corrected to vertical surfaces
-        difficulty_scale = 1.0
+        difficulty_scale = 0.1
         x_init_range = 0.2
         y_init_range = 0.2
         yaw_init_range = 0.
