@@ -4,10 +4,10 @@ from go1_gym.envs.go1.go1_config import Go1Config
 class AdaptiveGo1ConfigTerrain(Go1Config):
 
     class env(Go1Config.env):
-        # num_observations = 257
-        # observe_heights = True
-        num_observations = 70
-        observe_heights = False
+        num_observations = 257
+        observe_heights = True
+        # num_observations = 70
+        # observe_heights = False
 
     class rewards(Go1Config.rewards):
 
@@ -90,7 +90,7 @@ class AdaptiveGo1ConfigTerrain(Go1Config):
         terrain_proportions = [0.1, 0.1, 0.35, 0.25, 0.2]
         # trimesh only:
         slope_treshold = 0.75  # slopes above this threshold will be corrected to vertical surfaces
-        difficulty_scale = 0.1
+        difficulty_scale = 0.3
         x_init_range = 0.2
         y_init_range = 0.2
         yaw_init_range = 0.
@@ -105,3 +105,47 @@ class AdaptiveGo1ConfigTerrain(Go1Config):
     class asset(Go1Config.asset):
         penalize_contacts_on = ["thigh", "calf"]
         terminate_after_contacts_on = ["base", "hip"]
+
+    class commands(Go1Config.commands):
+        limit_vel_x = [-1.5, 1.5]
+        limit_vel_y = [-0.6, 0.6]
+        limit_vel_yaw = [-1.5, 1.5]
+    
+    class domain_rand(Go1Config.domain_rand):
+        randomize_base_mass = True
+
+        push_robots = True
+        max_push_vel_xy = 2.0
+        max_push_vel_z = 2.0
+        max_push_ang_rpy = 1.0
+        push_interval_s = 7.0
+        randomize_friction = True
+        randomize_friction_indep = False
+        friction_range = [0.1, 3.0]
+
+        randomize_restitution = True
+        restitution = 0.5  # default terrain restitution
+        randomize_motor_strength = True
+        Kp_factor_range = [0.8, 1.3]
+        Kd_factor_range = [0.5, 1.5]
+        randomize_rigids_after_start = False
+        restitution_range = [0.0, 0.4]
+        added_mass_range = [-1.0, 3.0]
+        randomize_gravity = True
+        gravity_range = [-1.0, 1.0]
+        gravity_rand_interval_s = 8.0
+        gravity_impulse_duration = 0.99
+        randomize_com_displacement = False
+        com_displacement_range = [-0.15, 0.15]
+        randomize_ground_friction = True
+        ground_friction_range = [0.0, 0.0]
+        motor_strength_range = [0.9, 1.1]
+        randomize_motor_offset = True
+        motor_offset_range = [-0.02, 0.02]
+        randomize_Kp_factor = False
+        randomize_Kd_factor = False
+        rand_interval_s = 4
+        tile_height_range = [-0.0, 0.0]
+        tile_height_curriculum = False
+        tile_height_update_interval = 1000000
+        tile_height_curriculum_step = 0.01

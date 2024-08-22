@@ -69,17 +69,17 @@ def load_env(logdir, headless=False, terrain_choice="flat", terrain_diff=0.1):
 
     # Choose Terrain
     if terrain_choice == "sslope":
-        cfg.terrain.terrain_proportions = [1.0, 0.0, 0.0, 0.0, 0.0]
+        cfg.terrain.terrain_proportions = [1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     elif terrain_choice == "rslope":
-        cfg.terrain.terrain_proportions = [0.0, 1.0, 0.0, 0.0, 0.0]
+        cfg.terrain.terrain_proportions = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     elif terrain_choice == "sup":
-        cfg.terrain.terrain_proportions = [0.0, 0.0, 1.0, 0.0, 0.0]
+        cfg.terrain.terrain_proportions = [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     elif terrain_choice == "sdown":
-        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 1.0, 0.0]
+        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     elif terrain_choice == "discrete":
-        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 0.0, 1.0]
+        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
     else:
-        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 0.0, 0.0]
+        cfg.terrain.terrain_proportions = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]
     cfg.terrain.curriculum = False
     cfg.terrain.selected = False
     cfg.terrain.difficulty_scale = terrain_diff

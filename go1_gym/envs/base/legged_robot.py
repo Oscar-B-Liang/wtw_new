@@ -1010,8 +1010,12 @@ class LeggedRobot(BaseTask):
         """
         if cfg.domain_rand.push_robots:
             env_ids = env_ids[self.episode_length_buf[env_ids] % int(cfg.domain_rand.push_interval) == 0]
-            max_vel = cfg.domain_rand.max_push_vel_xy
-            self.root_states[env_ids, 7:9] = torch_rand_float(-max_vel, max_vel, (len(env_ids), 2), device=self.device)  # lin vel x/y
+            max_vel_xy = cfg.domain_rand.max_push_vel_xy
+            max_vel_z = cfg.domain_rand.max_push_vel_z
+            max_ang_rpy = cfg.domain_rand.max_push_ang_rpy
+            self.root_states[env_ids, 7:9] = torch_rand_float(-max_vel_xy, max_vel_xy, (len(env_ids), 2), device=self.device)  # lin vel x/y
+            self.root_states[env_ids, 9:10] = torch_rand_float(-max_vel_z, max_vel_z, (len(env_ids), 1), device=self.device)  # lin vel z
+            self.root_states[env_ids, 10:13] = torch_rand_float(-max_ang_rpy, max_ang_rpy, (len(env_ids), 3), device=self.device)  # ang vel rpy
             self.gym.set_actor_root_state_tensor(self.sim, gymtorch.unwrap_tensor(self.root_states))
 
     def _teleport_robots(self, env_ids, cfg):

@@ -269,7 +269,9 @@ class Cfg(BaseConfig):
         gravity_range = [-1.0, 1.0]
         push_robots = True
         push_interval_s = 15
-        max_push_vel_xy = 1.
+        max_push_vel_xy = 1.0
+        max_push_vel_z = 1.0
+        max_push_ang_rpy = 1.0
         randomize_lag_timesteps = True
         lag_timesteps = 6
 

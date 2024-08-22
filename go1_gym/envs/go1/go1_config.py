@@ -188,6 +188,8 @@ class Go1Config(Cfg):
         randomize_base_mass = True
         push_robots = False
         max_push_vel_xy = 0.5
+        max_push_vel_z = 0.5
+        max_push_ang_rpy = 0.5
         randomize_friction = True
         randomize_restitution = True
         restitution = 0.5  # default terrain restitution
