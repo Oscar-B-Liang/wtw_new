@@ -4,6 +4,7 @@ from collections import defaultdict
 import itertools
 import os
 import pickle
+from scipy.spatial.transform import Rotation as R
 import yaml
 
 
@@ -34,11 +35,13 @@ class Logger:
     def get_vel_x_stats(self) -> (float, float):
         """Compute the x-direction average velocity in robot frame (by time).
         Averaged over all sub environments.
-        Return the two values, mean velocity (by time) and its variance.
+        Return the two values, mean velocity (by time) and the sqrt sum square error.
         """
+        command_vel_x = np.array(self.state_log["command_x"])
         base_vel_x = np.array(self.state_log["base_vel_x"])
-        base_vel_x = np.mean(base_vel_x, axis=0)
-        return np.mean(base_vel_x).item(), np.std(base_vel_x).item()
+        error_vel_x_square = np.mean(np.mean(np.square(base_vel_x - command_vel_x), axis=0), axis=0)
+        base_vel_x_mean = np.mean(base_vel_x, axis=0)
+        return np.mean(base_vel_x_mean).item(), np.sqrt(error_vel_x_square).item()
     
     def get_vel_x(self, robot_index: int) -> float:
         """Compute the x-direction average velocity in robot frame (by time).
@@ -50,18 +53,38 @@ class Logger:
     def get_vel_y_stats(self) -> (float, float):
         """Compute the y-direction average velocity in robot frame (by time).
         Averaged over all sub environments.
-        Return the two values, mean velocity by time and its variance.
+        Return the two values, mean velocity by time and the sqrt sum square error.
         """
+        command_vel_y = np.array(self.state_log["command_y"])
         base_vel_y = np.array(self.state_log["base_vel_y"])
-        base_vel_y = np.mean(base_vel_y, axis=0)
-        return np.mean(base_vel_y).item(), np.std(base_vel_y).item()
-    
+        error_vel_y_square = np.mean(np.mean(np.square(base_vel_y - command_vel_y), axis=0), axis=0)
+        base_vel_y_mean = np.mean(base_vel_y, axis=0)
+        return np.mean(base_vel_y_mean).item(), np.sqrt(error_vel_y_square).item()
+
     def get_vel_y(self, robot_index: int) -> float:
         """Compute the y-direction average velocity in robot frame (by time).
         For specified sub environment.
         """
         base_vel = np.array(self.state_log["base_vel_y"])
         return np.mean(base_vel[:, robot_index]).item()
+    
+    def get_vel_yaw_stats(self) -> (float, float):
+        """Compute the y-direction average velocity in robot frame (by time).
+        Averaged over all sub environments.
+        Return two values, mean yaw velocity by time and the sqrt sum square error.
+        """
+        command_vel_yaw = np.array(self.state_log["command_yaw"])
+        base_vel_yaw = np.array(self.state_log["base_vel_yaw"])
+        error_vel_yaw_square = np.mean(np.mean(np.square(base_vel_yaw - command_vel_yaw), axis=0), axis=0)
+        base_vel_yaw_mean = np.mean(base_vel_yaw, axis=0)
+        return np.mean(base_vel_yaw_mean).item(), np.sqrt(error_vel_yaw_square).item()
+    
+    def get_vel_yaw(self, robot_index: int) -> float:
+        """Compute the yaw-direction average velocity in robot frame (by time).
+        For specified sub environment.
+        """
+        base_vel = np.array(self.state_log["base_vel_yaw"])
+        return np.mean(base_vel[: robot_index]).item()
 
     def get_energy_consume_watts_stats(self) -> (float, float):
         """Compute the average energy consumption (by time) of this test.
@@ -84,9 +107,20 @@ class Logger:
         Return the two values, mean consumed energy by distance and its variance.
         """
         energy_consume = np.sum(np.array(self.state_log["energy_consume"]) * self.dt, axis=0)
-        distance_moved = np.absolute(self.state_log["base_pos_x"][-1] - self.state_log["base_pos_x"][0])
-        distance_moved[distance_moved <= 0.001] = 0.001
-        energy_consume_dist = energy_consume / distance_moved
+        base_pos_x = np.array(self.state_log["base_pos_x"])
+        base_pos_y = np.array(self.state_log["base_pos_y"])
+        base_pos_yaw = np.array(self.state_log["base_pos_yaw"])
+        amount_moved = np.zeros(base_pos_x.shape[1])
+        for i in range(base_pos_x.shape[0] - 1):
+            if np.sqrt(np.square(base_pos_x[i + 1] - base_pos_x[i]) + np.square(base_pos_y[i + 1] - base_pos_y[i])) > 1.0:
+                continue
+            if np.abs(base_pos_yaw[i + 1] - base_pos_yaw[i]) > np.pi / 2.0:
+                continue
+            amount_moved = amount_moved + np.sqrt(np.square(base_pos_x[i + 1] - base_pos_x[i]) + np.square(base_pos_y[i + 1] - base_pos_y[i]))
+            amount_moved = amount_moved + 0.5 * np.abs(base_pos_yaw[i + 1] - base_pos_yaw[i])
+
+        amount_moved[amount_moved <= 0.001] = 0.001
+        energy_consume_dist = energy_consume / amount_moved
         return np.mean(energy_consume_dist).item(), np.std(energy_consume_dist).item()
     
     def get_energy_consume_dist(self, robot_index: int) -> float:
@@ -94,7 +128,15 @@ class Logger:
         For specific sub environment.
         """
         energy_consume = np.sum(np.array(self.state_log["energy_consume"]) * self.dt, axis=0)
-        distance_moved = np.absolute(self.state_log["base_pos_x"][-1] - self.state_log["base_pos_x"][0])
+        base_pos_x = np.array(self.state_log["base_pos_x"])
+        base_pos_y = np.array(self.state_log["base_pos_y"])
+        distance_moved = np.zeros(base_pos_x.shape[1])
+        for i in range(base_pos_x.shape[0] - 1):
+            if np.sqrt(np.square(base_pos_x[i + 1] - base_pos_x[i]) + np.square(base_pos_y[i + 1] - base_pos_y[i])) > 1.0:
+                continue
+            distance_moved = distance_moved + np.sqrt(np.square(base_pos_x[i + 1] - base_pos_x[i]) + np.square(base_pos_y[i + 1] - base_pos_y[i]))
+
+        distance_moved[distance_moved <= 0.001] = 0.001
         energy_consume_dist = energy_consume[robot_index] / max(distance_moved[robot_index], 0.001)
         return energy_consume_dist.item()
 
@@ -122,6 +164,7 @@ class Logger:
             self._plot_dof_torques(test_name, idx)
             self._plot_actions(test_name, idx)
             self._plot_gaits(test_name, idx)
+            self._plot_tracking(test_name, idx)
 
     def _save_logs(self, test_name: str):
         """Save the logging dictionary into the model directory.
@@ -136,14 +179,20 @@ class Logger:
         # Save data statistics.
         vel_x_mean, vel_x_std = self.get_vel_x_stats()
         vel_y_mean, vel_y_std = self.get_vel_y_stats()
+        vel_yaw_mean, vel_yaw_std = self.get_vel_yaw_stats()
         energy_consume_watts_mean, energy_consume_watts_std = self.get_energy_consume_watts_stats()
         energy_consume_dist_mean, energy_consume_dist_std = self.get_energy_consume_dist_stats()
         rewards_mean, rewards_std = self.get_rewards_stats()
+
+        # Save tracking error, x, y, z, r, p, y.
+        # cost of transportation is deviding 2 * angular + translation.
         dump_dict = {
             'vel_x_mean': vel_x_mean,
             'vel_x_std': vel_x_std,
             'vel_y_mean': vel_y_mean,
             'vel_y_std': vel_y_std,
+            'vel_yaw_mean': vel_yaw_mean,
+            'vel_yaw_std': vel_yaw_std,
             'energy_consume_watts_mean': energy_consume_watts_mean,
             'energy_consume_watts_std': energy_consume_watts_std,
             'energy_consume_dist_mean': energy_consume_dist_mean,
@@ -442,3 +491,35 @@ class Logger:
         with open(os.path.join(self.model_dir, "analysis", f"{test_name}_env_{robot_index}_gait_info_{self.load_iteration}.yaml"), 'w') as file:
             yaml.dump(dump_dict, file)
             file.close()
+    
+    def _plot_tracking(self, test_name: str, robot_index: int):
+        fig, axs = plt.subplots(1, 1)
+        fig.set_size_inches(16, 6)
+        base_pos_x = np.array(self.state_log['base_pos_x'])[:, robot_index]
+        base_pos_y = np.array(self.state_log['base_pos_y'])[:, robot_index]
+        current_yaw = np.array(self.state_log['base_pos_yaw'])[0, robot_index]
+
+        command_vel_x = np.array(self.state_log['command_x'])[:, robot_index]
+        command_vel_yaw = np.array(self.state_log['command_yaw'])[:, robot_index]
+
+        reference_pos_x = np.zeros_like(base_pos_x)
+        reference_pos_y = np.zeros_like(base_pos_y)
+        reference_pos_x[0] = base_pos_x[0]
+        reference_pos_y[0] = base_pos_y[0]
+        for i in range(base_pos_x.shape[0] - 1):
+            reference_pos_x[i + 1] = command_vel_x[i] * np.cos(current_yaw) * self.dt + reference_pos_x[i]
+            reference_pos_y[i + 1] = command_vel_x[i] * np.sin(current_yaw) * self.dt + reference_pos_y[i]
+            current_yaw = current_yaw + command_vel_yaw[i] * self.dt
+
+        axs.plot(reference_pos_x, reference_pos_y, label="Reference")
+        axs.plot(base_pos_x, base_pos_y, label="Actual")
+        axs.legend()
+        axs.set_xlim([np.min(reference_pos_x) - 0.1, np.max(reference_pos_x) + 0.1])
+        axs.set_ylim([np.min(reference_pos_y) - 0.1, np.max(reference_pos_y) + 0.1])
+        axs.set_xlabel("x (m)", weight='bold')
+        axs.set_ylabel("y (m)", weight='bold')
+        axs.set_title("Tracking Plot", weight='bold')
+        axs.set_aspect('equal', adjustable='box')
+        fig.tight_layout()
+        fig.savefig(os.path.join(self.model_dir, "analysis", f"{test_name}_env_{robot_index}_tracking_plot_{self.load_iteration}.png"), dpi=100)
+        plt.close()

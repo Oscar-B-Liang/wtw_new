@@ -93,6 +93,7 @@ class Terrain:
         for j in range(cfg.num_cols):
             for i in range(cfg.num_rows):
                 difficulty = i / cfg.num_rows * cfg.difficulty_scale
+                # difficulty = (cfg.num_rows - 1) * cfg.difficulty_scale / cfg.num_rows
                 choice = j / cfg.num_cols + 0.001
 
                 terrain = self.make_terrain(cfg, choice, difficulty, cfg.proportions)

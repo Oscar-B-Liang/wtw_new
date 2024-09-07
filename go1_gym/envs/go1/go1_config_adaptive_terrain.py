@@ -53,7 +53,7 @@ class AdaptiveGo1ConfigTerrain(Go1Config):
             # Unparticipated Rewards.
             dof_pos = 0.0
             feet_impact_vel = 0.0
-            orientation = -5.0
+            orientation = 0.0
             feet_contact_forces = 0.0
 
             # Energy rewards.
@@ -72,9 +72,11 @@ class AdaptiveGo1ConfigTerrain(Go1Config):
         dynamic_friction = 1.0
         restitution = 0.0
         terrain_noise_magnitude = 0.0
+
         # rough terrain only:
         terrain_smoothness = 0.005
         measure_heights = True
+
         # 1mx1.6m rectangle (without center line)
         measured_points_x = [-0.8, -0.7, -0.6, -0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
         measured_points_y = [-0.5, -0.4, -0.3, -0.2, -0.1, 0., 0.1, 0.2, 0.3, 0.4, 0.5]
@@ -103,8 +105,8 @@ class AdaptiveGo1ConfigTerrain(Go1Config):
         center_span = 5
     
     class asset(Go1Config.asset):
-        penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = ["base", "hip"]
+        penalize_contacts_on = ["calf"]
+        terminate_after_contacts_on = ["base", "hip", "thigh"]
 
     class commands(Go1Config.commands):
         limit_vel_x = [-1.5, 1.5]
@@ -114,7 +116,7 @@ class AdaptiveGo1ConfigTerrain(Go1Config):
     class domain_rand(Go1Config.domain_rand):
         randomize_base_mass = True
 
-        push_robots = True
+        push_robots = False
         max_push_vel_xy = 2.0
         max_push_vel_z = 2.0
         max_push_ang_rpy = 1.0

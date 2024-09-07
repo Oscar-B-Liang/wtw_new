@@ -116,7 +116,7 @@ def play_go1(model_dir, lin_x_speed, yaw_speed, headless=True, terrain_choice="f
     env, policy = load_env(model_dir, headless=headless, terrain_choice=terrain_choice, terrain_diff=terrain_diff, device=device)
     os.makedirs(os.path.join(model_dir, "analysis"), exist_ok=True)
 
-    num_eval_steps = 500
+    num_eval_steps = 250
     gaits = {
         "pronking": [0, 0, 0],
         "trotting": [0.5, 0, 0],
@@ -149,6 +149,8 @@ def play_go1(model_dir, lin_x_speed, yaw_speed, headless=True, terrain_choice="f
     env.env.start_video_recording()
 
     for i in tqdm(range(num_eval_steps)):
+        x_vel_cmd = 2.5 * i / num_eval_steps
+
         with torch.no_grad():
             actions = policy(obs)
         env.commands[:, 0] = x_vel_cmd
@@ -164,7 +166,7 @@ def play_go1(model_dir, lin_x_speed, yaw_speed, headless=True, terrain_choice="f
         env.commands[:, 12] = stance_width_cmd
         obs, rew, done, info = env.step(actions)
 
-        if i >= 100 and i <= 400:
+        if i >= 0 and i <= 250:
             log_dict = {
                 'command_x': env.env.commands[:, 0].cpu().numpy(),
                 'command_y': env.env.commands[:, 1].cpu().numpy(),
