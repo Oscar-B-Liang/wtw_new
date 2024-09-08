@@ -116,7 +116,7 @@ def play_go1(model_dir, lin_x_speed, yaw_speed, headless=True, terrain_choice="f
     env, policy = load_env(model_dir, headless=headless, terrain_choice=terrain_choice, terrain_diff=terrain_diff, device=device)
     os.makedirs(os.path.join(model_dir, "analysis"), exist_ok=True)
 
-    num_eval_steps = 500
+    num_eval_steps = 1000
     gaits = {
         "pronking": [0, 0, 0],
         "trotting": [0.5, 0, 0],
