@@ -9,7 +9,7 @@ This repository provides an implementation of the paper:
       <b> Adaptive Energy Regularization for Autonomous Gait Transition and Energy-Efficient Quadruped Locomotion </b>
       </a>
       <br>
-      Boyuan Liang, Lingfeng Sun, Xinghao Zhu, Bike Zhang, Yixiao Wang, Ziyin Xiong, Chenran Li, Koushil Sreenath and Masayoshi Tomizuka
+      Boyuan Liang<sup>*</sup>, Lingfeng Sun<sup>*</sup>, Xinghao Zhu<sup>*</sup>, Bike Zhang, Yixiao Wang, Ziyin Xiong, Chenran Li, Koushil Sreenath and Masayoshi Tomizuka
       <br>
       <br>
       <a href="https://arxiv.org/abs/2403.20001">paper</a> /
@@ -17,6 +17,7 @@ This repository provides an implementation of the paper:
     <br>
 </td>
 
+<sup>*</sup> These three authors contributed equally to this project. Names are arranged solely by alphabetical order.
 <br>
 
 ## Usage <a name="Usage"></a>
